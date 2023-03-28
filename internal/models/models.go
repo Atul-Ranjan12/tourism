@@ -76,6 +76,24 @@ type AddBusData struct {
 	UpdatedAt   time.Time
 }
 
+
+// Type to add the activity form
+type AddActivityData struct {
+	ActivityID      int
+	MerchantID 		int
+	ActivityName     string
+	ActivityDescription    string
+	ActivityPrice  int
+	ActivityDuration    int
+	MaxGroupSize      int
+	AgeRestriction      int
+	PhoneNumber     string
+	Email           string
+	Location string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 // Bus Reservation Model
 type BusReservationData struct {
 	ReservationID   int

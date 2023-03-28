@@ -584,11 +584,16 @@ func (m *Repository) AdminAddMerchantItems(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Add all the portfolio information to the template data
-	buses, err := m.DB.GetAllBus(merchantID)
-	if err != nil {
+	buses, errBus := m.DB.GetAllBus(merchantID)
+	activities,errActivity:=m.DB.GetAllActivity(merchantID)
+	if errBus != nil {
 		log.Println("Error getting all the bus data", err)
 	}
+	if errActivity!=nil{
+		log.Println("error in getting activities",err)
+	}
 	data["bus"] = buses
+	data["activity"]=activities
 
 	render.Template(w, r, "add-merchant-item.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
@@ -698,6 +703,9 @@ func (m *Repository) PostAdminAddBus(w http.ResponseWriter, r *http.Request) {
 	log.Println("Succesful completion of the form submission")
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
 }
+
+
+
 
 // This function shows the Records of an individual bus
 func (m *Repository) AdminShowBus(w http.ResponseWriter, r *http.Request) {
@@ -1019,6 +1027,246 @@ func (m *Repository) PostShowOneReservation(w http.ResponseWriter, r *http.Reque
 
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-show-reservations", currentUser.ID), http.StatusSeeOther)
 }
+
+
+
+//function to handle get request for adding Recreational Activity
+func(m *Repository) AdminAddRecreationalActivity(w http.ResponseWriter, r *http.Request){
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+	ActivityDetails := models.AddActivityData{
+		ActivityName:"",
+		ActivityDescription:"",
+		ActivityPrice:0,
+		ActivityDuration:0,
+		MaxGroupSize:0,
+		AgeRestriction:0,
+		PhoneNumber:"",
+		Email:"",
+		Location:"",
+
+	}
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+	data["activity_details"]=ActivityDetails
+	render.Template(w,r,"add-recreational.page.tmpl",&models.TemplateData{
+		StringMap: stringMap,
+		Data: data,
+		Form:      forms.New(nil),
+	})
+
+}
+
+func(m *Repository) PostAdminAddRecreationalActivity(w http.ResponseWriter,r*http.Request){
+	// log.Println("Post Fucntion was called")
+	// Prevents session attacks
+	_ = m.App.Session.RenewToken(r.Context())
+
+	// Get the suer from the session
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	// Add data to the template
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// make stringmap
+	stringMap := make(map[string]string)
+
+	// Form Validattion:
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("ERROR: An unexpected Error occured while parsing the form")
+	}
+
+	// 1. Form Validation
+	// Validate the form
+	form := forms.New(r.PostForm)
+
+	// Make the bus details model
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchantID: ", err)
+		return
+	}
+
+	price := form.ConvertToInt("activity_price")
+	duration:=form.ConvertToInt("activity_duration")
+	groupSize:=form.ConvertToInt("max_size")
+	age:=form.ConvertToInt("min_age")
+
+	ActivityDetails := models.AddActivityData{
+		MerchantID: merchantID,
+		ActivityName:r.Form.Get("activity_name"),
+		ActivityDescription:r.Form.Get("activity_description"),
+		ActivityPrice: price,
+		ActivityDuration:duration,
+		MaxGroupSize:groupSize,
+		AgeRestriction:age,
+		PhoneNumber:r.Form.Get("phone_num"),
+		Email:r.Form.Get("email"),
+		Location:r.Form.Get("location"),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+
+	}
+
+	form.Required("activity_name", "activity_description", "location", "activity_price", "activity_duration", "min_age", "phone_num", "email","max_size")
+	form.HasUserAccepted("agreed")
+
+	if !form.Valid() {
+		data["activity_details"] = ActivityDetails
+		render.Template(w, r, "add-recreational.page.tmpl", &models.TemplateData{
+			StringMap: stringMap,
+			Data:      data,
+			Form:      form,
+		})
+		return
+	}
+
+	// 2. Add the Bus Details to the database
+	err = m.DB.AddActivityToDatabase(ActivityDetails)
+	if err != nil {
+		log.Println("Error adding activity details to the activity table")
+		return
+	}
+
+	// 4. Redirect the User
+	log.Println("Succesful completion of the form submission")
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
+
+}
+
+// This function shows the Records of Each activity
+func (m *Repository) AdminShowRecreationalActivity(w http.ResponseWriter, r *http.Request) {
+	// Set up stringmap
+	stringMap := make(map[string]string)
+
+	// Add User Details to the session
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Add the Activity details in the session
+	explodedURL := strings.Split(r.RequestURI, "/")
+	activityID, _ := strconv.Atoi(explodedURL[4])
+	activity, err := m.DB.GetActivityByID(activityID)
+	log.Println(activity)
+	if err != nil {
+		log.Println("Error retrieving activity:", err)
+		return
+	}
+	data["activity_details"] = activity
+
+	render.Template(w, r, "show-activity.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+		Data:      data,
+		Form:      forms.New(nil),
+	})
+}
+// This Function Updates the Details of the Merchant Recreational Activity
+func (m *Repository) PostAdminUpdateRecreationalActivity(w http.ResponseWriter, r *http.Request) {
+	// Get current user
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	// Set up stringmap
+	stringMap := make(map[string]string)
+
+	// Parse the form
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error Parsing the form")
+		return
+	}
+
+	// Get the Activity ID
+	explodedURL := strings.Split(r.RequestURI, "/")
+	log.Println(explodedURL)
+	activityID, _ := strconv.Atoi(explodedURL[4])
+	merchantID, _ := strconv.Atoi(explodedURL[2])
+
+	// Get previous activity
+	prevActivity, err := m.DB.GetActivityByID(activityID)
+	if err != nil {
+		log.Println("Couldnt get bus by id : ", err)
+		return
+	}
+	// Post The Form
+	form := forms.New(r.PostForm)
+	price := form.ConvertToInt("activity_price")
+	duration:=form.ConvertToInt("activity_duration")
+	groupSize:=form.ConvertToInt("max_size")
+	age:=form.ConvertToInt("min_age")
+
+	ActivityDetails := models.AddActivityData{
+		MerchantID: merchantID,
+		ActivityName:r.Form.Get("activity_name"),
+		ActivityDescription:r.Form.Get("activity_description"),
+		ActivityPrice: price,
+		ActivityDuration:duration,
+		MaxGroupSize:groupSize,
+		AgeRestriction:age,
+		PhoneNumber:r.Form.Get("phone_num"),
+		Email:r.Form.Get("email"),
+		Location:r.Form.Get("location"),
+		CreatedAt:   prevActivity.CreatedAt,
+		UpdatedAt:   time.Now(),
+	}
+
+	form.Required("activity_name", "activity_description", "location", "activity_price", "activity_duration", "min_age", "phone_num", "email","max_size")
+	data := make(map[string]interface{})
+
+	// Add User details to the template
+	data["user_details"] = currentUser
+
+	if !form.Valid() {
+		log.Println(form.Errors)
+		data["activity"] = ActivityDetails
+		render.Template(w, r, "show-activity.page.tmpl", &models.TemplateData{
+			StringMap: stringMap,
+			Data:      data,
+			Form:      form,
+		})
+		return
+	}
+
+	// Update the activity information
+	err = m.DB.UpdateActivityInfo(activityID, ActivityDetails)
+	if err != nil {
+		log.Println("Error updating Activity information: ", err)
+		return
+	}
+
+	// Redirect user
+	log.Println("Reached Here")
+	m.App.Session.Put(r.Context(), "flash", "Changes saved Succesfully!")
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
+}
+
+// Function to delete the activity
+func (m *Repository) PostAdminDeleteActivity(w http.ResponseWriter, r *http.Request) {
+	// Get current user
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	// Get the activity ID to be deleted
+	explodedURL := strings.Split(r.RequestURI, "/")
+	activityID, _ := strconv.Atoi(explodedURL[5])
+
+	// delete the activity
+	err := m.DB.DeleteActivityByID(activityID)
+	if err != nil {
+		log.Println("Error in deletion: ", err)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "flash", "Deleted Succesfully")
+	// Redirect User
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
+}
+
+
 
 // Make a Reservation Calender and display it
 func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,11 @@ type DatabaseRepo interface {
 	GetAddressIDFromUser(userID int) (int, error)
 	GetMerchantIDFromUserID(userID int) (int, error)
 	AddBusToDatabase(bus models.AddBusData) error
+	AddActivityToDatabase(activity models.AddActivityData) error
+	GetAllActivity(merchantID int)([]models.AddActivityData,error)
+	GetActivityByID(activityID int)(models.AddActivityData,error)
+	UpdateActivityInfo(activityID int, i models.AddActivityData) error
+	DeleteActivityByID(activityID int) error
 	GetAllBus(merchantID int) ([]models.AddBusData, error)
 	GetBusByID(busID int) (models.AddBusData, error)
 	UpdateBusInfo(busID int, i models.AddBusData) error

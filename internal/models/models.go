@@ -111,3 +111,19 @@ type HotelRoom struct {
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }
+
+// Structure to make the Hotel Room Reservation
+type HotelRoomReservation struct {
+	ReservationID int
+	HotelID       int
+	FirstName     string
+	LastName      string
+	ResDateStart  time.Time
+	ResDateEnd    time.Time
+	NumPeople     int
+	PhoneNumber   string
+	Email         string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Room          HotelRoom
+}

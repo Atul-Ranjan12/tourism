@@ -796,3 +796,164 @@ func (m *PostgresDBRepo) UpdateRoom(hotel models.HotelRoom, id int) error {
 	}
 	return nil
 }
+
+// Adds a reservation to the database
+func (m *PostgresDBRepo) MakeHotelReservation(res models.HotelRoomReservation) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	INSERT INTO hotel_reservations (first_name, last_name, hotel_id, reservation_date_start, 
+		reservation_date_end, num_people, phone_number, email, processed, created_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`
+
+	_, err := m.DB.QueryContext(ctx, query,
+		res.FirstName,
+		res.LastName,
+		res.HotelID,
+		res.ResDateStart,
+		res.ResDateEnd,
+		res.NumPeople,
+		res.PhoneNumber,
+		res.Email,
+		0,
+		res.CreatedAt,
+		res.UpdatedAt,
+	)
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+
+// Gets all the Hotel Reservations From the Database
+func (m *PostgresDBRepo) GetAllHotelReservations(showNew bool) ([]models.HotelRoomReservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var res []models.HotelRoomReservation
+	var query string
+	var processed int
+
+	if showNew {
+		processed = 0
+	} else {
+		processed = 1
+	}
+
+	query = fmt.Sprintf(`
+		SELECT r.id, first_name, last_name, hotel_id, reservation_date_start, 
+		reservation_date_end, num_people, phone_number, email, hotel_name, hotel_room_name
+		FROM hotel_reservations r
+		LEFT JOIN hotel_room h ON (r.hotel_id = h.id)
+		WHERE r.processed = %d
+		ORDER BY r.reservation_date_end ASC
+	`, processed)
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		log.Println("Cannot execute the select query: ")
+		return res, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var i models.HotelRoomReservation
+		err := rows.Scan(
+			&i.ReservationID,
+			&i.FirstName,
+			&i.LastName,
+			&i.HotelID,
+			&i.ResDateStart,
+			&i.ResDateEnd,
+			&i.NumPeople,
+			&i.PhoneNumber,
+			&i.Email,
+			&i.Room.HotelName,
+			&i.Room.HotelRoomName,
+		)
+		if err != nil {
+			log.Println("Error scanning the rows into variables")
+			return res, err
+		}
+		res = append(res, i)
+	}
+
+	if err = rows.Err(); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+// Get One Hotel Reservation By ID
+func (m *PostgresDBRepo) GetHotelReseravtionByID(id int) (models.HotelRoomReservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var i models.HotelRoomReservation
+
+	query := `
+		SELECT r.id, first_name, last_name, hotel_id, reservation_date_start, 
+		reservation_date_end, num_people, phone_number, email, hotel_name, hotel_room_name
+		FROM hotel_reservations r
+		LEFT JOIN hotel_room h ON (r.hotel_id = h.id)
+		WHERE r.id = $1
+		ORDER BY r.reservation_date_end ASC
+	`
+
+	row := m.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&i.ReservationID,
+		&i.FirstName,
+		&i.LastName,
+		&i.HotelID,
+		&i.ResDateStart,
+		&i.ResDateEnd,
+		&i.NumPeople,
+		&i.PhoneNumber,
+		&i.Email,
+		&i.Room.HotelName,
+		&i.Room.HotelRoomName,
+	)
+	if err != nil {
+		return i, err
+	}
+
+	return i, nil
+}
+
+// Funciton to Update a Reservation :: Hotel
+func (m *PostgresDBRepo) UpdateHotelReservation(res models.HotelRoomReservation, id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		UPDATE hotel_reservations
+		SET reservation_date_start = $1, reservation_date_start = $2, num_people = $3, 
+			phone_number = $4, email = $5
+		WHERE id = $6
+	`
+	_, err := m.DB.ExecContext(ctx, query, res.ResDateStart, res.ResDateEnd, res.NumPeople, res.PhoneNumber, res.Email, res.ReservationID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Delete a Reseravtion In General
+func (m *PostgresDBRepo) DeleteReservation(tableName string, id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		DELETE FROM $1 WHERE id = $2
+	`
+
+	_, err := m.DB.ExecContext(ctx, query, tableName, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

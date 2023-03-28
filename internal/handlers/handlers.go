@@ -894,16 +894,26 @@ func (m *Repository) ShowAllReservations(w http.ResponseWriter, r *http.Request)
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
-	// Get all the reservations from the database
+	// Get all the reservations from the database for the bus
 	busRes, err := m.DB.GetAllBusReservations(true)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
 
-	// Add the reservations into the data variable
+	// Get all the reservations from the database for Hotels:
+	hotelRes, err := m.DB.GetAllHotelReservations(true)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// Add the reservations into the data variable for Bus
 	data["reservations"] = busRes
 	stringMap["is_processed"] = "no"
+
+	// Add the reservations into the data variable for Hotels
+	data["reservations_hotel"] = hotelRes
 
 	render.Template(w, r, "merchant-show-reservations.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
@@ -1324,5 +1334,39 @@ func (m *Repository) ShowMakeHotelReservation(w http.ResponseWriter, r *http.Req
 
 // Function to post the reservation to the database
 func (m *Repository) PostShowMakeHotelReservation(w http.ResponseWriter, r *http.Request) {
-	log.Println("This funciton is called")
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error parsing the form")
+		return
+	}
+
+	// Parse things
+	resDateStart, _ := time.Parse("2006-01-02", r.Form.Get("res_date_start"))
+	resDateEnd, _ := time.Parse("2006-01-02", r.Form.Get("res_date_end"))
+	hotelID, _ := strconv.Atoi(r.Form.Get("hr_id"))
+	numPeople, _ := strconv.Atoi(r.Form.Get("num_people"))
+
+	// Make the reservation Data
+	res := models.HotelRoomReservation{
+		HotelID:      hotelID,
+		FirstName:    r.Form.Get("first_name"),
+		LastName:     r.Form.Get("last_name"),
+		ResDateStart: resDateStart,
+		ResDateEnd:   resDateEnd,
+		NumPeople:    numPeople,
+		PhoneNumber:  r.Form.Get("phone"),
+		Email:        r.Form.Get("email"),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	// Submitting to the database
+	err = m.DB.MakeHotelReservation(res)
+	if err != nil {
+		log.Println("Error adding the reservation to the database", err)
+		return
+	}
+
+	// Redirect to the same page for now
+	http.Redirect(w, r, "/make-hotel-reservation", http.StatusSeeOther)
 }

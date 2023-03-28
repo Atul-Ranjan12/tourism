@@ -11,6 +11,59 @@
   rel="stylesheet"
   type="text/css"
 />
+
+<style>
+body {font-family: Arial;}
+
+/* Style the tab */
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  -webkit-animation: fadeEffect 1s;
+  animation: fadeEffect 1s;
+}
+
+/* Fade in tabs */
+@-webkit-keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+@keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+</style>
+
 {{ end }}
 
 {{define "content"}}
@@ -18,7 +71,37 @@
 {{$user := index .Data "user_details"}}
 {{$p := index .StringMap "is_processed"}}
 
+<ul class="nav nav-tabs mb-3" id="ex1" role="tablist">
+  <li class="nav-item" role="presentation">
+    <a
+      class="tablinks nav-link"
+      id="ex1-tab-1"
+      data-mdb-toggle="tab"
+      href="#ex1-tabs-1"
+      role="tab"
+      aria-controls="ex1-tabs-1"
+      aria-selected="true"
+      onclick="openCity(event, 'bus_reservation')"
+      >Bus Reservations</a
+    >
+  </li>
+  <li class="nav-item" role="presentation">
+    <a
+      class="tablinks nav-link"
+      id="ex1-tab-2"
+      data-mdb-toggle="tab"
+      href="#ex1-tabs-2"
+      role="tab"
+      aria-controls="ex1-tabs-2"
+      aria-selected="false"
+      onclick="openCity(event, 'hotel_reservation')"
+      >Hotel Reservations</a
+    >
+  </li>
+</ul>
+
 <div class="container">
+  <div id="bus_reservation" class="tabcontent">
   <div class="row">
     <h4>Bus Reservations:</h4>
   </div>
@@ -61,14 +144,17 @@
     </div>
   </div>
   <hr>
-  <div class="row mt-3">
+</div>
+
+<div id="hotel_reservation" class="tabcontent">
+  <div class="row">
     <h4>Hotel Room Reservations:</h4>
   </div>
   <div class="row">
     <div class="col-md-12 mt-3">
       {{$hotelRes := index .Data "reservations_hotel"}}
       <table
-        id="example"
+        id="example_2"
         class="table table-hover cell-border"
         cellspacing="0"
         width="100%"
@@ -88,21 +174,24 @@
         <tbody>
           {{range $hotelRes}}
           <tr>
-            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}">{{.LastName}}</a></td>
+            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}/hotel">{{.LastName}}</a></td>
             <td>{{ humanDate .ResDateStart}}</td>
             <td>{{ humanDate .ResDateEnd}}</td>
             <td>{{.Room.HotelName}}</td>
             <td>{{.Room.HotelRoomName}}</td>
             <td>{{.PhoneNumber}}</td>
             <td>{{.NumPeople}}</td>
-            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}/process" class="btn btn-success {{if eq $p "yes"}} disabled {{end}}" {{if eq $p "yes"}} aria-disabled="true" {{end}}>Process</a></td>
+            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}/hotel/process" class="btn btn-success {{if eq $p "yes"}} disabled {{end}}" {{if eq $p "yes"}} aria-disabled="true" {{end}}>Process</a></td>
           </tr>
           {{end}}
         </tfoot>
       </table>
+      <hr>
     </div>
   </div>
 </div>
+</div>
+
 {{ end }}
 
 {{define "js"}}
@@ -118,6 +207,49 @@
 <script>
   $(document).ready(function () {
     $("#example").DataTable();
+    $("#example_2").DataTable();
   });
+</script>
+
+
+<script>
+{{$active := index .StringMap "active"}}
+console.log("Hello World");
+
+var i, tabcontent;
+tabcontent = document.getElementsByClassName("tabcontent");
+for (i = 0; i < tabcontent.length; i++) {
+  tabcontent[i].style.display = "none";
+}
+
+const urlParams = new URLSearchParams(location.search);
+console.log(urlParams);
+for (const [key, value] of urlParams) {
+    console.log(`${key}:${value}`);
+}
+
+if (urlParams.get('ac') === "hotel"){
+  console.log("Reached Here!")
+  document.getElementById("hotel_reservation").style.display = "block";
+  document.getElementById("hotel_reservation").className += " active"
+}else {
+  document.getElementById("bus_reservation").style.display = "block";
+  document.getElementById("bus_reservation").className += " active"
+}
+
+
+function openCity(evt, cityName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(cityName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
 </script>
 {{ end }}

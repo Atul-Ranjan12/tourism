@@ -293,7 +293,174 @@ func (m *PostgresDBRepo) GetMerchantIDFromUserID(userID int) (int, error) {
 	return merchantID, nil
 }
 
-// Add teh bus details to the server
+//Add activity to database
+func (m *PostgresDBRepo) AddActivityToDatabase(activity models.AddActivityData) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		INSERT INTO activity (activity_name, activity_description, activity_price, activity_duration, max_size, min_age, phone_num, email, location,
+						merchant_id, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12)
+	`
+	_, err := m.DB.QueryContext(ctx, query,
+		activity.ActivityName,
+		activity.ActivityDescription,
+		activity.ActivityPrice,
+		activity.ActivityDuration,
+		activity.MaxGroupSize,
+		activity.AgeRestriction,
+		activity.PhoneNumber,
+		activity.Email,
+		activity.Location,
+		activity.MerchantID,
+		activity.CreatedAt,
+		activity.UpdatedAt,
+	)
+	if err != nil {
+		log.Println("Error executing query: ", err)
+		return err
+	}
+
+	return nil
+}
+
+
+
+//get All activity from the database
+
+func (m *PostgresDBRepo) GetAllActivity(merchantID int) ([]models.AddActivityData, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT id, activity_name, activity_description, activity_price, activity_duration, max_size, min_age, phone_num, email, location,
+						merchant_id, created_at, updated_at
+		FROM activity
+		WHERE merchant_id = $1
+	`
+	var activities []models.AddActivityData
+
+	rows, err := m.DB.QueryContext(ctx, query, merchantID)
+	if err != nil {
+		log.Println("Could not execute query: GetAllActivity ", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var i models.AddActivityData
+		err := rows.Scan(
+			&i.ActivityID,
+			&i.ActivityName,
+			&i.ActivityDescription,
+			&i.ActivityPrice,
+			&i.ActivityDuration,
+			&i.MaxGroupSize,
+			&i.AgeRestriction,
+			&i.PhoneNumber,
+			&i.Email,
+			&i.Location,
+			&i.MerchantID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		)
+		if err != nil {
+			log.Println("Error scanning the rows into variables")
+			return activities, err
+		}
+
+		activities = append(activities, i)
+	}
+	if err = rows.Err(); err != nil {
+		return activities, err
+	}
+	return activities, nil
+}
+
+// Fucntion to get Activity details by ID
+func (m *PostgresDBRepo) GetActivityByID(activityID int) (models.AddActivityData, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT id, activity_name, activity_description, activity_price, activity_duration, max_size, min_age, phone_num, email, location,
+						merchant_id, created_at, updated_at
+		FROM activity
+		WHERE id = $1
+	`
+	var i models.AddActivityData
+
+	row := m.DB.QueryRowContext(ctx, query, activityID)
+	err := row.Scan(
+		&i.ActivityID,
+		&i.ActivityName,
+		&i.ActivityDescription,
+		&i.ActivityPrice,
+		&i.ActivityDuration,
+		&i.MaxGroupSize,
+		&i.AgeRestriction,
+		&i.PhoneNumber,
+		&i.Email,
+		&i.Location,
+		&i.MerchantID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	if err != nil {
+		return i, err
+	}
+	return i, nil
+}
+
+// Update the Activity Details in the page
+func (m *PostgresDBRepo) UpdateActivityInfo(activityID int, i models.AddActivityData) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		UPDATE activity
+		SET activity_name=$1, activity_description=$2, activity_price=$3, activity_duration=$4, max_size=$5, min_age=$6, phone_num=$7, email=$8, location=$9,
+			merchant_id=$10, created_at=$11, updated_at=$12
+		WHERE id = $13
+	`
+
+	_, err := m.DB.QueryContext(ctx, query,
+		i.ActivityName,
+		i.ActivityDescription,
+		i.ActivityPrice,
+		i.ActivityDuration,
+		i.MaxGroupSize,
+		i.AgeRestriction,
+		i.PhoneNumber,
+		i.Email,
+		i.Location,
+		i.MerchantID,
+		i.CreatedAt,
+		i.UpdatedAt,
+		activityID,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Function to delete activity by id
+func (m *PostgresDBRepo) DeleteActivityByID(activityID int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `DELETE FROM activity WHERE id=$1`
+
+	_, err := m.DB.ExecContext(ctx, query, activityID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+// Add the bus details to the server
 func (m *PostgresDBRepo) AddBusToDatabase(bus models.AddBusData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

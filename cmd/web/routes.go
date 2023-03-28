@@ -67,6 +67,7 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Get("/{src}/add-bus", handlers.Repo.AdminAddBus)
 		mux.Post("/{src}/add-bus", handlers.Repo.PostAdminAddBus)
 
+
 		// Merchant SHow and Edit Bus section
 		mux.Get("/{src}/add-bus/{id}", handlers.Repo.AdminShowBus)
 		mux.Post("/{src}/add-bus/{id}", handlers.Repo.PostAdminUpdateBus)
@@ -100,6 +101,19 @@ func routes(app *config.AppConfig) http.Handler {
 
 		// Function to delete the bus reservations
 		mux.Get("/{src}/delete-reservation/{id}", handlers.Repo.DeleteBusReservation)
+
+
+
+		//merchant add recreational route
+		mux.Get("/{src}/add-activity", handlers.Repo.AdminAddRecreationalActivity)
+		mux.Post("/{src}/add-activity", handlers.Repo.PostAdminAddRecreationalActivity)
+
+		//merchant show and edit recreational route
+		mux.Get("/{src}/add-activity/{id}", handlers.Repo.AdminShowRecreationalActivity)
+		mux.Post("/{src}/add-activity/{id}", handlers.Repo.PostAdminUpdateRecreationalActivity)
+
+		//merchant delete recreational activity
+		mux.Get("/{src}/add-activity/delete/{id}",handlers.Repo.PostAdminDeleteActivity)
 
 		// Function to get the reservation calender
 		mux.Get("/{src}/reservation-calender", handlers.Repo.ShowReservationCalender)

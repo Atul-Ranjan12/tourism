@@ -466,9 +466,9 @@ func (m *PostgresDBRepo) AddBusToDatabase(bus models.AddBusData) error {
 	defer cancel()
 
 	query := `
-		INSERT INTO bus (bus_name, bus_source, bus_destination, bus_model, bus_no_plate, num_seats, office_pan, office_address, 
+		INSERT INTO bus (bus_name, bus_source, bus_destination, bus_model, bus_no_plate, num_seats, office_pan, office_address, price,
 						merchant_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 	_, err := m.DB.QueryContext(ctx, query,
 		bus.BusName,
@@ -479,6 +479,7 @@ func (m *PostgresDBRepo) AddBusToDatabase(bus models.AddBusData) error {
 		bus.BusNumSeats,
 		bus.BusPAN,
 		bus.BusAddress,
+		bus.Price,
 		bus.MerchantID,
 		bus.CreatedAt,
 		bus.UpdatedAt,
@@ -545,7 +546,7 @@ func (m *PostgresDBRepo) GetBusByID(busID int) (models.AddBusData, error) {
 
 	query := `
 		SELECT id, bus_name, bus_source, bus_destination, bus_model, bus_no_plate, num_seats, office_pan, office_address, 
-			   merchant_id, created_at, updated_at
+			   merchant_id, created_at, updated_at, price
 		FROM bus
 		WHERE id = $1
 	`
@@ -565,6 +566,7 @@ func (m *PostgresDBRepo) GetBusByID(busID int) (models.AddBusData, error) {
 		&i.MerchantID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Price,
 	)
 	if err != nil {
 		return i, err
@@ -581,8 +583,8 @@ func (m *PostgresDBRepo) UpdateBusInfo(busID int, i models.AddBusData) error {
 		UPDATE bus
 		SET bus_name = $1, bus_source = $2, bus_destination = $3, bus_model = $4,
 			bus_no_plate = $5, num_seats = $6, office_pan = $7, office_address = $8,
-			merchant_id = $9, created_at = $10, updated_at = $11
-		WHERE id = $12
+			merchant_id = $9, created_at = $10, updated_at = $11, price = $12
+		WHERE id = $13
 	`
 
 	_, err := m.DB.QueryContext(ctx, query,
@@ -597,6 +599,7 @@ func (m *PostgresDBRepo) UpdateBusInfo(busID int, i models.AddBusData) error {
 		i.MerchantID,
 		i.CreatedAt,
 		i.UpdatedAt,
+		i.Price,
 		busID,
 	)
 	if err != nil {
@@ -795,5 +798,329 @@ func (m *PostgresDBRepo) DeleteBusReservation(id int) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// Function to add a new Hotel to the database
+func (m *PostgresDBRepo) AddNewHotelRoom(hotel models.HotelRoom) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	INSERT INTO hotel_room (hotel_name, hotel_room_name, hotel_type, hotel_address, hotel_pan, hotel_num_room, hotel_phone_1, hotel_phone_2, merchant_id, hotel_description, price, created_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+	`
+
+	_, err := m.DB.ExecContext(ctx, query,
+		hotel.HotelName,
+		hotel.HotelRoomName,
+		hotel.HotelType,
+		hotel.HotelAddress,
+		hotel.HotelPAN,
+		hotel.HotelNumRooms,
+		hotel.HotelPhone1,
+		hotel.HotelPhone2,
+		hotel.MerchantID,
+		hotel.HotelRoomDescription,
+		hotel.Price,
+		hotel.CreatedAt,
+		hotel.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Funciton to get all the hotel reservations:
+func (m *PostgresDBRepo) GetAllHotelRooms(merchantID int) ([]models.HotelRoom, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	SELECT id, hotel_name, hotel_room_name, hotel_type, hotel_address, hotel_pan, hotel_num_room, hotel_phone_1, hotel_phone_2, merchant_id, hotel_description, created_at, updated_at
+	FROM hotel_room 
+	WHERE merchant_id = $1
+	`
+	var rooms []models.HotelRoom
+
+	rows, err := m.DB.QueryContext(ctx, query, merchantID)
+	if err != nil {
+		log.Println("Could not execute this query", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var i models.HotelRoom
+		err := rows.Scan(
+			&i.HotelID,
+			&i.HotelName,
+			&i.HotelRoomName,
+			&i.HotelType,
+			&i.HotelAddress,
+			&i.HotelPAN,
+			&i.HotelNumRooms,
+			&i.HotelPhone1,
+			&i.HotelPhone2,
+			&i.MerchantID,
+			&i.HotelRoomDescription,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		)
+
+		if err != nil {
+			log.Println("Error scanning the rows into variables")
+			return rooms, err
+		}
+
+		rooms = append(rooms, i)
+	}
+	if err = rows.Err(); err != nil {
+		return rooms, err
+	}
+	return rooms, err
+}
+
+// Function to get a room by ID
+func (m *PostgresDBRepo) GetRoomByID(id int) (models.HotelRoom, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	SELECT id, hotel_name, hotel_room_name, hotel_type, hotel_address, hotel_pan, hotel_num_room, hotel_phone_1, hotel_phone_2, merchant_id, hotel_description, created_at, updated_at, price
+	FROM hotel_room 
+	WHERE id = $1 
+	`
+	var i models.HotelRoom
+
+	row := m.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&i.HotelID,
+		&i.HotelName,
+		&i.HotelRoomName,
+		&i.HotelType,
+		&i.HotelAddress,
+		&i.HotelPAN,
+		&i.HotelNumRooms,
+		&i.HotelPhone1,
+		&i.HotelPhone2,
+		&i.MerchantID,
+		&i.HotelRoomDescription,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Price,
+	)
+	if err != nil {
+		return i, err
+	}
+	return i, err
+}
+
+// Function to Delete a Bus
+func (m *PostgresDBRepo) DeleteRoomByID(id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	DELETE from hotel_room WHERE id = $1
+	`
+	_, err := m.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// Function to Update a Bus
+func (m *PostgresDBRepo) UpdateRoom(hotel models.HotelRoom, id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	UPDATE hotel_room
+	SET hotel_name = $1, hotel_room_name = $2, hotel_type = $3, hotel_address = $4, hotel_pan = $5, hotel_num_room = $6, hotel_phone_1 = $7, 
+		hotel_phone_2 = $8, merchant_id = $9, hotel_description = $10, created_at = $11, updated_at = $12, price = $13
+	WHERE id = $14
+	`
+	_, err := m.DB.ExecContext(ctx, query,
+		hotel.HotelName,
+		hotel.HotelRoomName,
+		hotel.HotelType,
+		hotel.HotelAddress,
+		hotel.HotelPAN,
+		hotel.HotelNumRooms,
+		hotel.HotelPhone1,
+		hotel.HotelPhone2,
+		hotel.MerchantID,
+		hotel.HotelRoomDescription,
+		hotel.CreatedAt,
+		hotel.UpdatedAt,
+		hotel.Price,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Adds a reservation to the database
+func (m *PostgresDBRepo) MakeHotelReservation(res models.HotelRoomReservation) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	INSERT INTO hotel_reservations (first_name, last_name, hotel_id, reservation_date_start, 
+		reservation_date_end, num_people, phone_number, email, processed, created_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`
+
+	_, err := m.DB.QueryContext(ctx, query,
+		res.FirstName,
+		res.LastName,
+		res.HotelID,
+		res.ResDateStart,
+		res.ResDateEnd,
+		res.NumPeople,
+		res.PhoneNumber,
+		res.Email,
+		0,
+		res.CreatedAt,
+		res.UpdatedAt,
+	)
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+
+// Gets all the Hotel Reservations From the Database
+func (m *PostgresDBRepo) GetAllHotelReservations(showNew bool) ([]models.HotelRoomReservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var res []models.HotelRoomReservation
+	var query string
+	var processed int
+
+	if showNew {
+		processed = 0
+	} else {
+		processed = 1
+	}
+
+	query = fmt.Sprintf(`
+		SELECT r.id, first_name, last_name, hotel_id, reservation_date_start, 
+		reservation_date_end, num_people, phone_number, email, hotel_name, hotel_room_name
+		FROM hotel_reservations r
+		LEFT JOIN hotel_room h ON (r.hotel_id = h.id)
+		WHERE r.processed = %d
+		ORDER BY r.reservation_date_end ASC
+	`, processed)
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		log.Println("Cannot execute the select query: ")
+		return res, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var i models.HotelRoomReservation
+		err := rows.Scan(
+			&i.ReservationID,
+			&i.FirstName,
+			&i.LastName,
+			&i.HotelID,
+			&i.ResDateStart,
+			&i.ResDateEnd,
+			&i.NumPeople,
+			&i.PhoneNumber,
+			&i.Email,
+			&i.Room.HotelName,
+			&i.Room.HotelRoomName,
+		)
+		if err != nil {
+			log.Println("Error scanning the rows into variables")
+			return res, err
+		}
+		res = append(res, i)
+	}
+
+	if err = rows.Err(); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+// Get One Hotel Reservation By ID
+func (m *PostgresDBRepo) GetHotelReseravtionByID(id int) (models.HotelRoomReservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var i models.HotelRoomReservation
+
+	query := `
+		SELECT r.id, first_name, last_name, hotel_id, reservation_date_start, 
+		reservation_date_end, num_people, phone_number, email, hotel_name, hotel_room_name
+		FROM hotel_reservations r
+		LEFT JOIN hotel_room h ON (r.hotel_id = h.id)
+		WHERE r.id = $1
+		ORDER BY r.reservation_date_end ASC
+	`
+
+	row := m.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&i.ReservationID,
+		&i.FirstName,
+		&i.LastName,
+		&i.HotelID,
+		&i.ResDateStart,
+		&i.ResDateEnd,
+		&i.NumPeople,
+		&i.PhoneNumber,
+		&i.Email,
+		&i.Room.HotelName,
+		&i.Room.HotelRoomName,
+	)
+	if err != nil {
+		return i, err
+	}
+
+	return i, nil
+}
+
+// Funciton to Update a Reservation :: Hotel
+func (m *PostgresDBRepo) UpdateHotelReservation(res models.HotelRoomReservation, id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		UPDATE hotel_reservations
+		SET reservation_date_start = $1, reservation_date_start = $2, num_people = $3, 
+			phone_number = $4, email = $5
+		WHERE id = $6
+	`
+	_, err := m.DB.ExecContext(ctx, query, res.ResDateStart, res.ResDateEnd, res.NumPeople, res.PhoneNumber, res.Email, res.ReservationID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Delete a Reseravtion In General
+func (m *PostgresDBRepo) DeleteReservation(tableName string, id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		DELETE FROM $1 WHERE id = $2
+	`
+
+	_, err := m.DB.ExecContext(ctx, query, tableName, id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

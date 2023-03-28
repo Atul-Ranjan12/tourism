@@ -15,20 +15,36 @@ type DatabaseRepo interface {
 	AddMerchant(mer models.MerchantData) error
 	GetAddressIDFromUser(userID int) (int, error)
 	GetMerchantIDFromUserID(userID int) (int, error)
+
+	// Bus Basic Fucntions
 	AddBusToDatabase(bus models.AddBusData) error
+
+	// Activity Basic Functions 
 	AddActivityToDatabase(activity models.AddActivityData) error
 	GetAllActivity(merchantID int)([]models.AddActivityData,error)
 	GetActivityByID(activityID int)(models.AddActivityData,error)
 	UpdateActivityInfo(activityID int, i models.AddActivityData) error
 	DeleteActivityByID(activityID int) error
+
 	GetAllBus(merchantID int) ([]models.AddBusData, error)
 	GetBusByID(busID int) (models.AddBusData, error)
 	UpdateBusInfo(busID int, i models.AddBusData) error
 	DeleteBusByID(busID int) error
 	MakeBusReservation(busRes models.BusReservationData) error
+
+	// Bus Reservation Functions
 	GetAllBusReservations(showNew bool) ([]models.BusReservationData, error)
 	GetReservationByID(id int) (models.BusReservationData, error)
 	ProcessReservation(table string, id int) error
 	UpdateBusReservation(res models.BusReservationData, id int) error
 	DeleteBusReservation(id int) error
+	AddNewHotelRoom(hotel models.HotelRoom) error
+	GetAllHotelRooms(merchantID int) ([]models.HotelRoom, error)
+	GetRoomByID(id int) (models.HotelRoom, error)
+	DeleteRoomByID(id int) error
+	UpdateRoom(hotel models.HotelRoom, id int) error
+
+	// Hotel Room Reservation Functions
+	MakeHotelReservation(res models.HotelRoomReservation) error
+	GetAllHotelReservations(showNew bool) ([]models.HotelRoomReservation, error)
 }

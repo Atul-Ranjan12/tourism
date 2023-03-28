@@ -594,6 +594,15 @@ func (m *Repository) AdminAddMerchantItems(w http.ResponseWriter, r *http.Reques
 	}
 	data["bus"] = buses
 	data["activity"]=activities
+	data["has_bus"] = len(buses)
+
+	// Get all the Hotel Rooms
+	rooms, err := m.DB.GetAllHotelRooms(merchantID)
+	if err != nil {
+		log.Println("Error getting all the room data", err)
+	}
+	data["hotel_room"] = rooms
+	data["has_hotel_room"] = len(rooms)
 
 	render.Template(w, r, "add-merchant-item.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
@@ -632,11 +641,10 @@ func (m *Repository) AdminAddBus(w http.ResponseWriter, r *http.Request) {
 
 // This function handles the Post functionality of the page
 func (m *Repository) PostAdminAddBus(w http.ResponseWriter, r *http.Request) {
-	log.Println("Post Fucntion was called")
 	// Prevents session attacks
 	_ = m.App.Session.RenewToken(r.Context())
 
-	// Get the suer from the session
+	// Get the user from the session
 	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
 
 	// Add data to the template
@@ -664,6 +672,7 @@ func (m *Repository) PostAdminAddBus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	numSeats := form.ConvertToInt("bus_seats")
+	price := form.ConvertToInt("price")
 
 	busDetails := models.AddBusData{
 		MerchantID:  merchantID,
@@ -675,11 +684,12 @@ func (m *Repository) PostAdminAddBus(w http.ResponseWriter, r *http.Request) {
 		BusNumSeats: numSeats,
 		BusNumPlate: r.Form.Get("bus_no_plate"),
 		BusPAN:      r.Form.Get("bus_pan"),
+		Price:       price,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
-	form.Required("bus_name", "bus_model", "office_address", "bus_start", "bus_end", "bus_seats", "bus_no_plate", "bus_pan")
+	form.Required("bus_name", "bus_model", "office_address", "bus_start", "bus_end", "bus_seats", "bus_no_plate", "bus_pan", "price")
 	form.HasUserAccepted("agreed")
 
 	if !form.Valid() {
@@ -700,7 +710,6 @@ func (m *Repository) PostAdminAddBus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. Redirect the User
-	log.Println("Succesful completion of the form submission")
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
 }
 
@@ -764,7 +773,7 @@ func (m *Repository) PostAdminUpdateBus(w http.ResponseWriter, r *http.Request) 
 	// Post The Form
 	form := forms.New(r.PostForm)
 	numSeats := form.ConvertToInt("bus_seats")
-
+	price := form.ConvertToInt("price")
 	// Form Validation
 
 	// Get the bus
@@ -779,6 +788,7 @@ func (m *Repository) PostAdminUpdateBus(w http.ResponseWriter, r *http.Request) 
 		BusNumSeats: numSeats,
 		BusNumPlate: r.Form.Get("bus_no_plate"),
 		BusPAN:      r.Form.Get("bus_pan"),
+		Price:       price,
 		CreatedAt:   prevBus.CreatedAt,
 		UpdatedAt:   time.Now(),
 	}
@@ -890,16 +900,26 @@ func (m *Repository) ShowAllReservations(w http.ResponseWriter, r *http.Request)
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
-	// Get all the reservations from the database
+	// Get all the reservations from the database for the bus
 	busRes, err := m.DB.GetAllBusReservations(true)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
 
-	// Add the reservations into the data variable
+	// Get all the reservations from the database for Hotels:
+	hotelRes, err := m.DB.GetAllHotelReservations(true)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// Add the reservations into the data variable for Bus
 	data["reservations"] = busRes
 	stringMap["is_processed"] = "no"
+
+	// Add the reservations into the data variable for Hotels
+	data["reservations_hotel"] = hotelRes
 
 	render.Template(w, r, "merchant-show-reservations.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
@@ -1324,4 +1344,275 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 		IntMap:    intMap,
 	})
 
+}
+
+// Function for the merchant to show :: add a hotel
+func (m *Repository) AdminAddHotel(w http.ResponseWriter, r *http.Request) {
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+	// Add Empty Hotel Reservation to the template
+	data["hotel_reg"] = models.HotelRoom{}
+
+	// Add the reservations into the data variable
+	render.Template(w, r, "merchant-add-hotel.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+		Data:      data,
+		Form:      forms.New(nil),
+	})
+}
+
+// Post Function for the merchant to post :: add a hotel
+func (m *Repository) PostAdminAddHotel(w http.ResponseWriter, r *http.Request) {
+	log.Println("This function was called")
+
+	// Prevents session attacks
+	_ = m.App.Session.RenewToken(r.Context())
+
+	// Get the user from the session
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	// Add data to the template
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// make stringmap
+	stringMap := make(map[string]string)
+
+	// Server side Form Validation
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("ERROR: An unexpected Error occured while parsing the form")
+	}
+
+	// 1. Form Validation
+	// Validate the form
+	form := forms.New(r.PostForm)
+
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchantID: ", err)
+		return
+	}
+
+	numRooms := form.ConvertToInt("no_rooms")
+	price := form.ConvertToInt("price")
+
+	// Make the Hotel Reservation Structure
+	hotelRoomDetails := models.HotelRoom{
+		MerchantID:           merchantID,
+		HotelName:            r.Form.Get("hotel_name"),
+		HotelRoomName:        r.Form.Get("hotel_room_name"),
+		HotelAddress:         r.Form.Get("office_address"),
+		HotelType:            r.Form.Get("hotel_type"),
+		HotelPAN:             r.Form.Get("hotel_pan"),
+		HotelNumRooms:        numRooms,
+		HotelPhone1:          r.Form.Get("hotel_phone_1"),
+		HotelPhone2:          r.Form.Get("hotel_phone_2"),
+		HotelRoomDescription: r.Form.Get("hotel_desc"),
+		Price:                price,
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
+	}
+
+	// User side form validation
+	form.Required("hotel_name", "hotel_room_name", "office_address", "hotel_type", "hotel_pan", "no_rooms", "hotel_phone_1", "hotel_phone_2", "hotel_desc", "price")
+	form.Required("agreed")
+
+	if !form.Valid() {
+		data["hotel_reg"] = hotelRoomDetails
+		render.Template(w, r, "merchant-add-hotel.page.tmpl", &models.TemplateData{
+			StringMap: stringMap,
+			Data:      data,
+			Form:      form,
+		})
+		return
+	}
+
+	// 2. Add the Data To the Database
+	err = m.DB.AddNewHotelRoom(hotelRoomDetails)
+	if err != nil {
+		log.Println("Error inserting the hotel into the database", err)
+		return
+	}
+
+	// 4. Redirect the user
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
+}
+
+// TODO: Increase the field size of the Hotel Description
+
+// Show a single Hotel Room Detail
+func (m *Repository) AdminShowOneHotel(w http.ResponseWriter, r *http.Request) {
+	// Set up stringmap
+	stringMap := make(map[string]string)
+
+	// Add User Details to the session
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Add the Bus details in the session
+	explodedURL := strings.Split(r.RequestURI, "/")
+	roomID, _ := strconv.Atoi(explodedURL[4])
+	room, err := m.DB.GetRoomByID(roomID)
+	if err != nil {
+		log.Println("Error retrieving bus:", err)
+		return
+	}
+	data["hotel_reg"] = room
+
+	render.Template(w, r, "merchant-show-one-hotel.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+		Data:      data,
+		Form:      forms.New(nil),
+	})
+}
+
+// Post function to show the hotel
+func (m *Repository) PostAdminShowOneHotel(w http.ResponseWriter, r *http.Request) {
+	// Get current user
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	// Set up stringmap
+	stringMap := make(map[string]string)
+
+	// Parse the form
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error Parsing the form")
+		return
+	}
+
+	// Get the Bus ID
+	explodedURL := strings.Split(r.RequestURI, "/")
+	log.Println(explodedURL)
+	roomID, _ := strconv.Atoi(explodedURL[4])
+	merchantID, _ := strconv.Atoi(explodedURL[2])
+
+	// Get previous Room By ID
+	prevRoom, err := m.DB.GetRoomByID(roomID)
+	if err != nil {
+		log.Println("Could not get room by ID: ", err)
+		return
+	}
+
+	// Post The Form
+	form := forms.New(r.PostForm)
+	numRooms := form.ConvertToInt("no_rooms")
+	price := form.ConvertToInt("price")
+
+	// Form Validation
+	hotelRoomDetails := models.HotelRoom{
+		MerchantID:           merchantID,
+		HotelName:            r.Form.Get("hotel_name"),
+		HotelRoomName:        r.Form.Get("hotel_room_name"),
+		HotelAddress:         r.Form.Get("office_address"),
+		HotelType:            r.Form.Get("hotel_type"),
+		HotelPAN:             r.Form.Get("hotel_pan"),
+		HotelNumRooms:        numRooms,
+		HotelPhone1:          r.Form.Get("hotel_phone_1"),
+		HotelPhone2:          r.Form.Get("hotel_phone_2"),
+		HotelRoomDescription: r.Form.Get("hotel_desc"),
+		Price:                price,
+		CreatedAt:            prevRoom.CreatedAt,
+		UpdatedAt:            time.Now(),
+	}
+
+	// User side form validation
+	form.Required("hotel_name", "hotel_room_name", "office_address", "hotel_type", "hotel_pan", "no_rooms", "hotel_phone_1", "hotel_phone_2", "hotel_desc", "price")
+	form.Required("agreed")
+
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	if !form.Valid() {
+		log.Println(form.Errors)
+		data["hotel_reg"] = hotelRoomDetails
+
+		render.Template(w, r, "merchant-show-one-hotel.page.tmpl", &models.TemplateData{
+			StringMap: stringMap,
+			Data:      data,
+			Form:      form,
+		})
+	}
+
+	// Update the Bus Information
+	err = m.DB.UpdateRoom(hotelRoomDetails, roomID)
+	if err != nil {
+		log.Println("Error updating room information ", err)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "flash", "Changes saved Succesfully!")
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
+}
+
+// Function to Delete the Bus
+func (m *Repository) DeleteBus(w http.ResponseWriter, r *http.Request) {
+	// Get current user
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	// Get the bus ID to be deleted
+	explodedURL := strings.Split(r.RequestURI, "/")
+	roomID, _ := strconv.Atoi(explodedURL[5])
+
+	// Delete the Bus
+	err := m.DB.DeleteRoomByID(roomID)
+	if err != nil {
+		log.Println("Erro rin deletion: ", err)
+		return
+	}
+	m.App.Session.Put(r.Context(), "flash", "Deleted Succesfully")
+	// Redirect User
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
+}
+
+// Function to display the Make Reservation Page for the Hotel Reservations
+func (m *Repository) ShowMakeHotelReservation(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "make-hotel-reservation.page.tmpl", &models.TemplateData{})
+}
+
+// Function to post the reservation to the database
+func (m *Repository) PostShowMakeHotelReservation(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error parsing the form")
+		return
+	}
+
+	// Parse things
+	resDateStart, _ := time.Parse("2006-01-02", r.Form.Get("res_date_start"))
+	resDateEnd, _ := time.Parse("2006-01-02", r.Form.Get("res_date_end"))
+	hotelID, _ := strconv.Atoi(r.Form.Get("hr_id"))
+	numPeople, _ := strconv.Atoi(r.Form.Get("num_people"))
+
+	// Make the reservation Data
+	res := models.HotelRoomReservation{
+		HotelID:      hotelID,
+		FirstName:    r.Form.Get("first_name"),
+		LastName:     r.Form.Get("last_name"),
+		ResDateStart: resDateStart,
+		ResDateEnd:   resDateEnd,
+		NumPeople:    numPeople,
+		PhoneNumber:  r.Form.Get("phone"),
+		Email:        r.Form.Get("email"),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	// Submitting to the database
+	err = m.DB.MakeHotelReservation(res)
+	if err != nil {
+		log.Println("Error adding the reservation to the database", err)
+		return
+	}
+
+	// Redirect to the same page for now
+	http.Redirect(w, r, "/make-hotel-reservation", http.StatusSeeOther)
 }

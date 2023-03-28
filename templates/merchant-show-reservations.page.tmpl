@@ -60,6 +60,48 @@
       </table>
     </div>
   </div>
+  <hr>
+  <div class="row mt-3">
+    <h4>Hotel Room Reservations:</h4>
+  </div>
+  <div class="row">
+    <div class="col-md-12 mt-3">
+      {{$hotelRes := index .Data "reservations_hotel"}}
+      <table
+        id="example"
+        class="table table-hover cell-border"
+        cellspacing="0"
+        width="100%"
+      >
+        <thead>
+          <tr>
+            <th class="th-sm">LastName</th>
+            <th class="th-sm">Reservation Date Start</th>
+            <th class="th-sm">Reservation Date End</th>
+            <th class="th-sm">Hotel Name</th>
+            <th class="th-sm">Hotel Room</th>
+            <th class="th-sm">Phone Number</th>
+            <th class="th-sm">Number of People</th>
+            <th class="th-sm">Process</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $hotelRes}}
+          <tr>
+            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}">{{.LastName}}</a></td>
+            <td>{{ humanDate .ResDateStart}}</td>
+            <td>{{ humanDate .ResDateEnd}}</td>
+            <td>{{.Room.HotelName}}</td>
+            <td>{{.Room.HotelRoomName}}</td>
+            <td>{{.PhoneNumber}}</td>
+            <td>{{.NumPeople}}</td>
+            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}/process" class="btn btn-success {{if eq $p "yes"}} disabled {{end}}" {{if eq $p "yes"}} aria-disabled="true" {{end}}>Process</a></td>
+          </tr>
+          {{end}}
+        </tfoot>
+      </table>
+    </div>
+  </div>
 </div>
 {{ end }}
 

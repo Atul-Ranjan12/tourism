@@ -72,6 +72,7 @@ type AddBusData struct {
 	BusNumSeats int
 	BusNumPlate string
 	BusPAN      string
+	Price       int
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -109,4 +110,38 @@ type BusReservationData struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	Bus             AddBusData
+}
+
+// Model for the Hotel/ Hotel Room
+type HotelRoom struct {
+	HotelID              int
+	MerchantID           int
+	HotelName            string
+	HotelRoomName        string
+	HotelType            string
+	HotelAddress         string
+	HotelPAN             string
+	HotelNumRooms        int
+	HotelPhone1          string
+	HotelPhone2          string
+	HotelRoomDescription string
+	Price                int
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+}
+
+// Structure to make the Hotel Room Reservation
+type HotelRoomReservation struct {
+	ReservationID int
+	HotelID       int
+	FirstName     string
+	LastName      string
+	ResDateStart  time.Time
+	ResDateEnd    time.Time
+	NumPeople     int
+	PhoneNumber   string
+	Email         string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Room          HotelRoom
 }

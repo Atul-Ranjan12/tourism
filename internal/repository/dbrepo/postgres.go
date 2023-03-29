@@ -293,7 +293,7 @@ func (m *PostgresDBRepo) GetMerchantIDFromUserID(userID int) (int, error) {
 	return merchantID, nil
 }
 
-//Add activity to database
+// Add activity to database
 func (m *PostgresDBRepo) AddActivityToDatabase(activity models.AddActivityData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -324,8 +324,6 @@ func (m *PostgresDBRepo) AddActivityToDatabase(activity models.AddActivityData) 
 
 	return nil
 }
-
-
 
 //get All activity from the database
 
@@ -458,7 +456,6 @@ func (m *PostgresDBRepo) DeleteActivityByID(activityID int) error {
 	}
 	return nil
 }
-
 
 // Add the bus details to the server
 func (m *PostgresDBRepo) AddBusToDatabase(bus models.AddBusData) error {
@@ -1041,7 +1038,7 @@ func (m *PostgresDBRepo) GetAllHotelReservations(showNew bool) ([]models.HotelRo
 			&i.Room.HotelRoomName,
 		)
 		if err != nil {
-			log.Println("Error scanning the rows into variables")
+			log.Println("Error scanning the rows into variables: GetAllHotelResrevations")
 			return res, err
 		}
 		res = append(res, i)
@@ -1097,11 +1094,11 @@ func (m *PostgresDBRepo) UpdateHotelReservation(res models.HotelRoomReservation,
 
 	query := `
 		UPDATE hotel_reservations
-		SET reservation_date_start = $1, reservation_date_start = $2, num_people = $3, 
-			phone_number = $4, email = $5
-		WHERE id = $6
+		SET num_people = $1, 
+			phone_number = $2, email = $3
+		WHERE id = $4
 	`
-	_, err := m.DB.ExecContext(ctx, query, res.ResDateStart, res.ResDateEnd, res.NumPeople, res.PhoneNumber, res.Email, res.ReservationID)
+	_, err := m.DB.ExecContext(ctx, query, res.NumPeople, res.PhoneNumber, res.Email, id)
 	if err != nil {
 		return err
 	}
@@ -1113,11 +1110,12 @@ func (m *PostgresDBRepo) DeleteReservation(tableName string, id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := `
-		DELETE FROM $1 WHERE id = $2
-	`
+	query := fmt.Sprintf(`
+		DELETE FROM %s
+		WHERE id = $1
+	`, tableName)
 
-	_, err := m.DB.ExecContext(ctx, query, tableName, id)
+	_, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}

@@ -19,10 +19,10 @@ type DatabaseRepo interface {
 	// Bus Basic Fucntions
 	AddBusToDatabase(bus models.AddBusData) error
 
-	// Activity Basic Functions 
+	// Activity Basic Functions
 	AddActivityToDatabase(activity models.AddActivityData) error
-	GetAllActivity(merchantID int)([]models.AddActivityData,error)
-	GetActivityByID(activityID int)(models.AddActivityData,error)
+	GetAllActivity(merchantID int) ([]models.AddActivityData, error)
+	GetActivityByID(activityID int) (models.AddActivityData, error)
 	UpdateActivityInfo(activityID int, i models.AddActivityData) error
 	DeleteActivityByID(activityID int) error
 
@@ -47,4 +47,9 @@ type DatabaseRepo interface {
 	// Hotel Room Reservation Functions
 	MakeHotelReservation(res models.HotelRoomReservation) error
 	GetAllHotelReservations(showNew bool) ([]models.HotelRoomReservation, error)
+	GetHotelReseravtionByID(id int) (models.HotelRoomReservation, error)
+	UpdateHotelReservation(res models.HotelRoomReservation, id int) error
+
+	// In general Delete Reservation
+	DeleteReservation(tableName string, id int) error
 }

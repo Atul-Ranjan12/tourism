@@ -39,7 +39,9 @@
 
     <div class="row mt-3">
       <div class="col-sm-6">
-        <a href="/merchant/{{ $user.ID }}/add-activity" class="btn btn-block btn-lg btn-outline-warning"
+        <a
+          href="/merchant/{{ $user.ID }}/add-activity"
+          class="btn btn-block btn-lg btn-outline-warning"
           >Recreational Activity Reservations</a
         >
       </div>
@@ -61,7 +63,7 @@
 {{$bus := index .Data "bus"}}
 {{$activity:= index .Data "activity"}}
 {{$hasBus := index .Data "has_bus"}}
-
+{{$has_activity:=index .Data "has_activity"}}
 {{$room := index .Data "hotel_room"}}
 {{$hasRoom := index .Data "has_hotel_room"}}
 
@@ -79,7 +81,7 @@
   <br />
   <hr />
 </div>
-{{end}}
+{{ end }}
 {{else}}
 <div class="title mt-4">
   <p class="text-secondary">None</p>
@@ -89,11 +91,31 @@
 <div class="title mt-3">
   <h5>Recreational Activities :</h5>
 </div>
+{{if gt $has_activity 0}}
 {{range $activity}}
 <div class="container">
   <div class="title mt-4">
-    <div class="float-sm-left text-secondary"><a href="/merchant/{{ $user.ID }}/add-activity/{{.ActivityID}}">{{.ActivityName}}</a></div>
-    <div class="float-sm-right text-secondary">Location: {{.Location}}  Price: {{.ActivityPrice}}</div>
+    <div class="float-sm-left text-secondary">
+      <a
+        href="/merchant/{{ $user.ID }}/add-activity/{{.ActivityID}}"
+        >{{.ActivityName}}</a
+      >
+    </div>
+    <div class="float-sm-right text-secondary">
+      Location: {{.Location}} Price: {{.ActivityPrice}}
+    </div>
+    
+    <br />
+    <hr />
+  </div>
+</div>
+
+{{ end }}
+{{else}}
+<div class="title mt-4">
+  <p class="text-secondary">None</p>
+  <hr />
+</div>
 {{ end }}
 
 <div class="title mt-3">
@@ -116,7 +138,7 @@
   <br />
   <hr />
 </div>
-{{end}}
+{{ end }}
 {{else}}
 <div class="title mt-4">
   <p class="text-secondary">None</p>

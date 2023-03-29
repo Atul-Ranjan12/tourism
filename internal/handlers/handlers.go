@@ -594,6 +594,7 @@ func (m *Repository) AdminAddMerchantItems(w http.ResponseWriter, r *http.Reques
 	}
 	data["bus"] = buses
 	data["activity"]=activities
+	data["has_activity"]=len(activities)
 	data["has_bus"] = len(buses)
 
 	// Get all the Hotel Rooms

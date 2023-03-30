@@ -1869,3 +1869,139 @@ func (m *Repository) DeleteHotelReservation(w http.ResponseWriter, r *http.Reque
 
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-show-reservations?ac=hotel", currentUser.ID), http.StatusSeeOther)
 }
+
+// Make a function to Show Review Section
+func (m *Repository) ShowAddReview(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "add-review.page.tmpl", &models.TemplateData{})
+}
+
+// Function to add a review
+func (m *Repository) PostShowAddReview(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error parsing the form")
+		return
+	}
+
+	// Parse Things
+	cid, _ := strconv.Atoi(r.Form.Get("cat"))
+	itemID, _ := strconv.Atoi(r.Form.Get("item"))
+	stars, _ := strconv.Atoi(r.Form.Get("stars"))
+
+	rev := models.Review{
+		CategoryID: cid,
+		ItemID:     itemID,
+		FirstName:  r.Form.Get("first_name"),
+		LastName:   r.Form.Get("last_name"),
+		Email:      r.Form.Get("email"),
+		Phone:      r.Form.Get("phone"),
+		Review:     r.Form.Get("review"),
+		Stars:      stars,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+
+	err = m.DB.InsertReview(rev)
+	if err != nil {
+		log.Println("Error inserting review", err)
+		return
+	}
+
+	http.Redirect(w, r, "/add-review", http.StatusSeeOther)
+}
+
+// Function to show the reviews page
+func (m *Repository) ShowReviewsPage(w http.ResponseWriter, r *http.Request) {
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Declare a variable to show the display reviews:
+
+	// Get the MerchantID from the UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+
+	// 1. Get All the Bus of the merchant
+	var busReview []models.CatItemReview
+	buses, err := m.DB.GetAllBus(merchantID)
+	if err != nil {
+		log.Println("Error retrieving all the buses")
+	}
+	// a) Populate the Bus Reviews
+	for _, bus := range buses {
+		var i models.CatItemReview
+		i.ItemName = bus.BusName
+		// Get item reviews of all the buses (category 3)
+		itemReview, err := m.DB.GetItemReviews(3, bus.BusID)
+		if err != nil {
+			log.Println("Error getting Bus Reviews: ", err)
+			return
+		}
+
+		i.Review = itemReview
+		busReview = append(busReview, i)
+	}
+
+	// 2. Get All the Hotel Reservatins of the merchant
+	rooms, err := m.DB.GetAllHotelRooms(merchantID)
+	if err != nil {
+		log.Println("Error getting all the room data", err)
+	}
+
+	// a) Populate the Hotel Reviews
+	var hotelReview []models.CatItemReview
+	for _, room := range rooms {
+		var i models.CatItemReview
+		i.ItemName = room.HotelName
+
+		itemReview, err := m.DB.GetItemReviews(4, room.HotelID)
+		if err != nil {
+			log.Println("Error getting Hotel Room Reviews: ", err)
+			return
+		}
+
+		i.Review = itemReview
+		hotelReview = append(hotelReview, i)
+	}
+
+	// 3. Get All the recreational Activities of the merchant
+	activities, err := m.DB.GetAllActivity(merchantID)
+	if err != nil {
+		log.Println("Error getting al the activities", err)
+	}
+
+	// a) Populate the activity review
+	var activityReview []models.CatItemReview
+	for _, activity := range activities {
+		var i models.CatItemReview
+		i.ItemName = activity.ActivityName
+
+		itemReview, err := m.DB.GetItemReviews(5, activity.ActivityID)
+		if err != nil {
+			log.Println("Error getting Hotel Room Reviews: ", err)
+			return
+		}
+
+		i.Review = itemReview
+		activityReview = append(activityReview, i)
+	}
+
+	// Putting the values as data keys to pass it to the template
+	data["bus_reviews"] = busReview
+	data["hotel_reviews"] = hotelReview
+	data["activity_reviews"] = activityReview
+
+	render.Template(w, r, "show-reviews.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+		Data:      data,
+	})
+}

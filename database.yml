@@ -1,8 +1,8 @@
 development:
   dialect: postgres
   database: tourism
-  user: postgres
-  password: "krishna"
+  user: atulranjan
+  password: ""
   host: 127.0.0.1
   pool: 5
 

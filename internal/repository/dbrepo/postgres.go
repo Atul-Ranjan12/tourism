@@ -1263,3 +1263,74 @@ func (m *PostgresDBRepo) DeleteReservation(tableName string, id int) error {
 
 	return nil
 }
+
+// 1. Create a function to post the reviews
+func (m *PostgresDBRepo) InsertReview(r models.Review) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		INSERT INTO reviews (review_cat, review_item, first_name, last_name, email, phone, stars, review, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	_, err := m.DB.ExecContext(ctx, query,
+		r.CategoryID,
+		r.ItemID,
+		r.FirstName,
+		r.LastName,
+		r.Email,
+		r.Phone,
+		r.Stars,
+		r.Review,
+		r.CreatedAt,
+		r.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Function to get the particular Item Review from the database:
+func (m *PostgresDBRepo) GetItemReviews(catID int, itemID int) ([]models.ItemReview, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var itemReview []models.ItemReview
+
+	query := `
+		SELECT first_name, last_name, phone, email, stars, review 
+		FROM reviews 
+		WHERE review_cat = $1 AND review_item = $2
+	`
+
+	rows, err := m.DB.QueryContext(ctx, query, catID, itemID)
+	if err != nil {
+		log.Println("Could not execute query")
+		return itemReview, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var i models.ItemReview
+		err := rows.Scan(
+			&i.FirstName,
+			&i.LastName,
+			&i.Phone,
+			&i.Email,
+			&i.Stars,
+			&i.Review,
+		)
+		if err != nil {
+			log.Println("Error scanning the rows into variables")
+			return itemReview, err
+		}
+
+		itemReview = append(itemReview, i)
+	}
+	if err = rows.Err(); err != nil {
+		return itemReview, err
+	}
+	return itemReview, nil
+}

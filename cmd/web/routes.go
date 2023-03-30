@@ -41,6 +41,11 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/make-activity-reservation", handlers.Repo.ShowMakeActivityReservation)
 	mux.Post("/make-activity-reservation", handlers.Repo.PostShowMakeActivityReservation)
 
+	// Utility
+	// 1. Write Reviews for Items:
+	mux.Get("/add-review", handlers.Repo.ShowAddReview)
+	mux.Post("/add-review", handlers.Repo.PostShowAddReview)
+
 	fileServer := http.FileServer(http.Dir("./static/"))
 	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
@@ -48,8 +53,6 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Route("/merchant", func(mux chi.Router) {
 		// Check if user is authenticated
 		mux.Use(Auth)
-
-		mux.Get("/{src}/dashboard", handlers.Repo.ShowAdminDashboard)
 
 		// Verification Code :: Stage 1
 		mux.Get("/{src}/verification", handlers.Repo.ShowAdminVerification)
@@ -64,39 +67,60 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Post("/{src}/verification-documents", handlers.Repo.PostShowDocumentsVerification)
 
 		// Merchant Dashboard Items
-		// Merchant Add item Seciotn
+		// 1. Merchant Add item Seciotn
 		mux.Get("/{src}/merchant-add-items", handlers.Repo.AdminAddMerchantItems)
 
-		// Merchant Add Bus Section:
+		// 2. Merchant Reservation Calender Section
+		mux.Get("/{src}/reservation-calender", handlers.Repo.ShowReservationCalender)
+
+		// 3. Merchant Dashboard Section
+		mux.Get("/{src}/dashboard", handlers.Repo.ShowAdminDashboard)
+
+		// 4. Show All Reservations :: Unprocessed
+		mux.Get("/{src}/merchant-show-reservations", handlers.Repo.ShowAllReservations)
+
+		// 5. Show All Reservations :: Processed
+		mux.Get("/{src}/merchant-show-reservations-processed", handlers.Repo.ShowReservationsProcessed)
+
+		// 6. Show Reviews Section
+		mux.Get("/{src}/merchant-reviews", handlers.Repo.ShowReviewsPage)
+
+		// Add Items Section
+		// Bus
+		// 1. Merchant Add Bus Section:
 		mux.Get("/{src}/add-bus", handlers.Repo.AdminAddBus)
 		mux.Post("/{src}/add-bus", handlers.Repo.PostAdminAddBus)
 
-		// Merchant SHow and Edit Bus section
+		// 2. Merchant SHow and Edit Bus section
 		mux.Get("/{src}/add-bus/{id}", handlers.Repo.AdminShowBus)
 		mux.Post("/{src}/add-bus/{id}", handlers.Repo.PostAdminUpdateBus)
 
-		// Delete the bus
+		// 3. Delete the bus
 		mux.Get("/{src}/add-bus/delete/{id}", handlers.Repo.PostAdminDeleteBus)
 
-		// Merchant Add Hotel Resrvation Section
-		mux.Get("/{src}/add-hotel", handlers.Repo.AdminAddHotel)
-		mux.Post("/{src}/add-hotel", handlers.Repo.PostAdminAddHotel)
-
-		// Mercant Show and Edit the Bus Section
-		mux.Get("/{src}/add-hotel/{id}", handlers.Repo.AdminShowOneHotel)
-		mux.Post("/{src}/add-hotel/{id}", handlers.Repo.PostAdminShowOneHotel)
-
-		// Delete the reservation
-		mux.Get("/{src}/add-hotel/delete/{id}", handlers.Repo.DeleteRoom)
-
-		// Show the bus Reservation :: UnProcessed
-		mux.Get("/{src}/merchant-show-reservations", handlers.Repo.ShowAllReservations)
-
-		// Show One Single Bus Reservation
+		// 4. Show One Single Bus Reservation
 		mux.Get("/{src}/merchant-show-reservations/{id}", handlers.Repo.ShowOneReservation)
 		mux.Post("/{src}/merchant-show-reservations/{id}", handlers.Repo.PostShowOneReservation)
 
-		// Show One Single Hotel Reservation
+		// 5. Link to Process the Bus Reservation
+		mux.Get("/{src}/merchant-show-reservations/{id}/process", handlers.Repo.ProcessBusReservation)
+
+		// 6. Function to delete the bus reservations
+		mux.Get("/{src}/delete-reservation/{id}", handlers.Repo.DeleteBusReservation)
+
+		// Hotel Reservations:
+		// 1.  Merchant Add Hotel Resrvation Section
+		mux.Get("/{src}/add-hotel", handlers.Repo.AdminAddHotel)
+		mux.Post("/{src}/add-hotel", handlers.Repo.PostAdminAddHotel)
+
+		// 2. Mercant Show and Edit the Bus Section
+		mux.Get("/{src}/add-hotel/{id}", handlers.Repo.AdminShowOneHotel)
+		mux.Post("/{src}/add-hotel/{id}", handlers.Repo.PostAdminShowOneHotel)
+
+		// 3. Delete the reservation
+		mux.Get("/{src}/add-hotel/delete/{id}", handlers.Repo.DeleteRoom)
+
+		// 4. Show One Single Hotel Reservation
 		mux.Get("/{src}/merchant-show-reservations/{id}/hotel", handlers.Repo.ShowOneHotelReservation)
 		mux.Post("/{src}/merchant-show-reservations/{id}/hotel", handlers.Repo.PostShowOneHotelReservation)
 
@@ -104,40 +128,29 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Get("/{src}/merchant-show-reservations/{id}/activity", handlers.Repo.ShowOneActivityReservation)
 		mux.Post("/{src}/merchant-show-reservations/{id}/activity", handlers.Repo.PostShowOneActivityReservation)
 
-		// Link to Process the Bus Reservation
-		mux.Get("/{src}/merchant-show-reservations/{id}/process", handlers.Repo.ProcessBusReservation)
-
-		// Link to Process the Hotel Reservation
+		// 5.  Link to Process the Hotel Reservation
 		mux.Get("/{src}/merchant-show-reservations/{id}/hotel/process", handlers.Repo.ProcessHotelReservations)
 
 		// Link to Process the Activity Reservation
 		mux.Get("/{src}/merchant-show-reservations/{id}/activity/process", handlers.Repo.ProcessActivityReservations)
 
-		// Show Bus Reservaitons UnProcessed
-		mux.Get("/{src}/merchant-show-reservations-processed", handlers.Repo.ShowReservationsProcessed)
-
-		// Function to delete the bus reservations
-		mux.Get("/{src}/delete-reservation/{id}", handlers.Repo.DeleteBusReservation)
-
-		// Function to Delete the Hotel Reservation
+		// 6. Function to Delete the Hotel Reservation
 		mux.Get("/{src}/delete-reservation/{id}/hotel", handlers.Repo.DeleteHotelReservation)
 
 		// Function to Delete the Activity Reservation
 		mux.Get("/{src}/delete-reservation/{id}/activity", handlers.Repo.DeleteActivityReservation)
 
-		//merchant add recreational route
+		// Recreational Activities
+		// 1. merchant add recreational route
 		mux.Get("/{src}/add-activity", handlers.Repo.AdminAddRecreationalActivity)
 		mux.Post("/{src}/add-activity", handlers.Repo.PostAdminAddRecreationalActivity)
 
-		//merchant show and edit recreational route
+		// 2. merchant show and edit recreational route
 		mux.Get("/{src}/add-activity/{id}", handlers.Repo.AdminShowRecreationalActivity)
 		mux.Post("/{src}/add-activity/{id}", handlers.Repo.PostAdminUpdateRecreationalActivity)
 
-		//merchant delete recreational activity
+		// 3. merchant delete recreational activity
 		mux.Get("/{src}/add-activity/delete/{id}", handlers.Repo.PostAdminDeleteActivity)
-
-		// Function to get the reservation calender
-		mux.Get("/{src}/reservation-calender", handlers.Repo.ShowReservationCalender)
 
 	})
 

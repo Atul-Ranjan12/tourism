@@ -161,3 +161,34 @@ type ActivityReservation struct {
 	UpdatedAt     time.Time
 	Activity      AddActivityData
 }
+
+// Utility Model to Post a Item Review
+type Review struct {
+	ReviewID   int
+	CategoryID int
+	ItemID     int
+	FirstName  string
+	LastName   string
+	Phone      string
+	Email      string
+	Stars      int
+	Review     string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+// Define a type for the reveiw structure to be displayed in the webpage
+type ItemReview struct {
+	FirstName string
+	LastName  string
+	Phone     string
+	Email     string
+	Stars     int
+	Review    string
+}
+
+// Define a type to describe all the reviews for a particular merchant item
+type CatItemReview struct {
+	ItemName string
+	Review   []ItemReview
+}

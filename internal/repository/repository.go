@@ -59,4 +59,10 @@ type DatabaseRepo interface {
 
 	// In general Delete Reservation
 	DeleteReservation(tableName string, id int) error
+
+	// Uptility Fucntion to add to the reveiws
+	InsertReview(r models.Review) error
+
+	// Functions to get all the item reveiws:
+	GetItemReviews(catID int, itemID int) ([]models.ItemReview, error)
 }

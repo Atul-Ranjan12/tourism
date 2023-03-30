@@ -98,6 +98,20 @@ body {font-family: Arial;}
       >Hotel Reservations</a
     >
   </li>
+
+  <li class="nav-item" role="presentation">
+    <a
+      class="tablinks nav-link"
+      id="ex1-tab-3"
+      data-mdb-toggle="tab"
+      href="#ex1-tabs-3"
+      role="tab"
+      aria-controls="ex1-tabs-3"
+      aria-selected="false"
+      onclick="openCity(event, 'activity_reservation')"
+      >Recreational Activity Reservations</a
+    >
+  </li>
 </ul>
 
 <div class="container">
@@ -190,6 +204,50 @@ body {font-family: Arial;}
     </div>
   </div>
 </div>
+
+
+<div id="activity_reservation" class="tabcontent">
+  <div class="row">
+    <h4>activity Reservations:</h4>
+  </div>
+  <div class="row">
+    <div class="col-md-12 mt-3">
+      {{$activityRes := index .Data "reservations_activity"}}
+      <table
+        id="example_3"
+        class="table table-hover cell-border"
+        cellspacing="0"
+        width="100%"
+      >
+        <thead>
+          <tr>
+            <th class="th-sm">LastName</th>
+            <th class="th-sm">Reservation Date</th>
+            <th class="th-sm">Activity Name</th>
+            <th class="th-sm">Activity Location</th>
+            <th class="th-sm">Phone Number</th>
+            <th class="th-sm">Number of People</th>
+            <th class="th-sm">Process</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $activityRes}}
+          <tr>
+            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}/activity">{{.LastName}}</a></td>
+            <td>{{ humanDate .ResDate}}</td>
+            <td>{{.Activity.ActivityName}}</td>
+            <td>{{.Activity.Location}}</td>
+            <td>{{.PhoneNumber}}</td>
+            <td>{{.NumPeople}}</td>
+            <td><a href="/merchant/{{$user.ID}}/merchant-show-reservations/{{.ReservationID}}/activity/process" class="btn btn-success {{if eq $p "yes"}} disabled {{end}}" {{if eq $p "yes"}} aria-disabled="true" {{end}}>Process</a></td>
+          </tr>
+          {{end}}
+        </tfoot>
+      </table>
+      <hr>
+    </div>
+  </div>
+</div>
 </div>
 
 {{ end }}
@@ -208,6 +266,7 @@ body {font-family: Arial;}
   $(document).ready(function () {
     $("#example").DataTable();
     $("#example_2").DataTable();
+    $("#example_3").DataTable();
   });
 </script>
 
@@ -232,7 +291,11 @@ if (urlParams.get('ac') === "hotel"){
   console.log("Reached Here!")
   document.getElementById("hotel_reservation").style.display = "block";
   document.getElementById("hotel_reservation").className += " active"
-}else {
+}else if(urlParams.get('ac') === "activity") {
+  document.getElementById("activity_reservation").style.display = "block";
+  document.getElementById("activity_reservation").className += " active"
+}
+else{
   document.getElementById("bus_reservation").style.display = "block";
   document.getElementById("bus_reservation").className += " active"
 }

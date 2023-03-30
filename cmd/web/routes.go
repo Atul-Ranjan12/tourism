@@ -37,6 +37,10 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/make-hotel-reservation", handlers.Repo.ShowMakeHotelReservation)
 	mux.Post("/make-hotel-reservation", handlers.Repo.PostShowMakeHotelReservation)
 
+	// 3.Recreational Activity Reservation
+	mux.Get("/make-activity-reservation", handlers.Repo.ShowMakeActivityReservation)
+	mux.Post("/make-activity-reservation", handlers.Repo.PostShowMakeActivityReservation)
+
 	fileServer := http.FileServer(http.Dir("./static/"))
 	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
@@ -96,11 +100,18 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Get("/{src}/merchant-show-reservations/{id}/hotel", handlers.Repo.ShowOneHotelReservation)
 		mux.Post("/{src}/merchant-show-reservations/{id}/hotel", handlers.Repo.PostShowOneHotelReservation)
 
+		// Show One Single Activity Reservation
+		mux.Get("/{src}/merchant-show-reservations/{id}/activity", handlers.Repo.ShowOneActivityReservation)
+		mux.Post("/{src}/merchant-show-reservations/{id}/activity", handlers.Repo.PostShowOneActivityReservation)
+
 		// Link to Process the Bus Reservation
 		mux.Get("/{src}/merchant-show-reservations/{id}/process", handlers.Repo.ProcessBusReservation)
 
 		// Link to Process the Hotel Reservation
 		mux.Get("/{src}/merchant-show-reservations/{id}/hotel/process", handlers.Repo.ProcessHotelReservations)
+
+		// Link to Process the Activity Reservation
+		mux.Get("/{src}/merchant-show-reservations/{id}/activity/process", handlers.Repo.ProcessActivityReservations)
 
 		// Show Bus Reservaitons UnProcessed
 		mux.Get("/{src}/merchant-show-reservations-processed", handlers.Repo.ShowReservationsProcessed)
@@ -110,6 +121,9 @@ func routes(app *config.AppConfig) http.Handler {
 
 		// Function to Delete the Hotel Reservation
 		mux.Get("/{src}/delete-reservation/{id}/hotel", handlers.Repo.DeleteHotelReservation)
+
+		// Function to Delete the Activity Reservation
+		mux.Get("/{src}/delete-reservation/{id}/activity", handlers.Repo.DeleteActivityReservation)
 
 		//merchant add recreational route
 		mux.Get("/{src}/add-activity", handlers.Repo.AdminAddRecreationalActivity)

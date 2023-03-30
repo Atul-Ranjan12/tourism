@@ -912,6 +912,11 @@ func (m *Repository) ShowAllReservations(w http.ResponseWriter, r *http.Request)
 		helpers.ServerError(w, err)
 		return
 	}
+	activityRes,err:=m.DB.GetAllActivityReservations(true)
+	if err !=nil{
+		helpers.ServerError(w, err)
+		return
+	}
 
 	// Add the reservations into the data variable for Bus
 	data["reservations"] = busRes
@@ -919,6 +924,9 @@ func (m *Repository) ShowAllReservations(w http.ResponseWriter, r *http.Request)
 
 	// Add the reservations into the data variable for Hotels
 	data["reservations_hotel"] = hotelRes
+
+	// add reservations into data variable for ativities
+	data["reservations_activity"]=activityRes
 
 	render.Template(w, r, "merchant-show-reservations.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
@@ -1015,10 +1023,16 @@ func (m *Repository) ShowReservationsProcessed(w http.ResponseWriter, r *http.Re
 		helpers.ServerError(w, err)
 		return
 	}
+	activityRes,err:=m.DB.GetAllActivityReservations(false)
+	if err!=nil{
+		helpers.ServerError(w, err)
+		return
+	}
 
 	// Add the reservations into the data variable
 	data["reservations"] = busRes
 	data["reservations_hotel"] = hotelRes
+	data["reservations_activity"]=activityRes
 
 	stringMap["is_processed"] = "yes"
 
@@ -1288,6 +1302,148 @@ func (m *Repository) PostAdminDeleteActivity(w http.ResponseWriter, r *http.Requ
 	// Redirect User
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
 }
+
+
+// Function to display the Make Reservation Page for the activity Reservations
+func (m *Repository) ShowMakeActivityReservation(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "make-activity-reservation.page.tmpl", &models.TemplateData{})
+}
+
+// Function to post the reservation to the database
+func (m *Repository) PostShowMakeActivityReservation(w http.ResponseWriter, r *http.Request) {
+	log.Println("reached post function")
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error parsing the form")
+		return
+	}
+
+	// Parse things
+	resDate, _ := time.Parse("2006-01-02", r.Form.Get("res_date"))
+	activityID, _ := strconv.Atoi(r.Form.Get("activity_id"))
+	numPeople, _ := strconv.Atoi(r.Form.Get("num_people"))
+
+	// Make the reservation Data
+	res := models.ActivityReservation{
+		ActivityID:   activityID,
+		FirstName:    r.Form.Get("first_name"),
+		LastName:     r.Form.Get("last_name"),
+		ResDate:      resDate,
+		NumPeople:    numPeople,
+		PhoneNumber:  r.Form.Get("phone"),
+		Email:        r.Form.Get("email"),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	log.Println(res)
+
+	// Submitting to the database
+	err = m.DB.MakeActivityReservation(res)
+	if err != nil {
+		log.Println("Error adding the reservation to the database", err)
+		return
+	}
+
+	// Redirect to the same page for now
+	http.Redirect(w, r, "/make-activity-reservation", http.StatusSeeOther)
+}
+
+// Function to handle Processed activity Reservations
+func (m *Repository) ProcessActivityReservations(w http.ResponseWriter, r *http.Request) {
+	// Get the reservation ID
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	explodedURL := strings.Split(r.RequestURI, "/")
+	id, _ := strconv.Atoi(explodedURL[4])
+
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+	stringMap["active"] = "activity"
+
+	err := m.DB.ProcessReservation("activity_reservations", id)
+	if err != nil {
+		log.Println("There was an error processing the reservation ")
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-show-reservations?ac=activity", currentUser.ID), http.StatusSeeOther)
+}
+
+// Function to Show One activity Reservation
+func (m *Repository) ShowOneActivityReservation(w http.ResponseWriter, r *http.Request) {
+
+	// Get current user
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Get the Reservation ID
+	explodedURL := strings.Split(r.RequestURI, "/")
+	id, _ := strconv.Atoi(explodedURL[4])
+
+	res, err := m.DB.GetActivityReseravtionByID(id)
+	if err != nil {
+		log.Println("Error fetching the reservation from the database", err)
+		return
+	}
+	data["one_res"] = res
+
+	// Send the reservation to the new template
+	render.Template(w, r, "merchant-show-activityReservation.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+		Data:      data,
+		Form:      forms.New(nil),
+	})
+}
+
+// Function to Update One activity Reservation
+func (m *Repository) PostShowOneActivityReservation(w http.ResponseWriter, r *http.Request) {
+	// Get the current user
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	numPeople, _ := strconv.Atoi(r.Form.Get("numPeople"))
+
+	resUpdate := models.ActivityReservation{
+		NumPeople:   numPeople,
+		PhoneNumber: r.Form.Get("phone"),
+		Email:       r.Form.Get("email"),
+	}
+
+	// Get the reservation ID
+	explodedURL := strings.Split(r.RequestURI, "/")
+	id, _ := strconv.Atoi(explodedURL[4])
+
+	// Update the Reservation
+	err := m.DB.UpdateActivityReservation(resUpdate, id)
+	if err != nil {
+		log.Println("Error updating the reservation ", err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-show-reservations?ac=activity", currentUser.ID), http.StatusSeeOther)
+}
+
+func (m *Repository) DeleteActivityReservation(w http.ResponseWriter, r *http.Request) {
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+
+	explodedURL := strings.Split(r.RequestURI, "/")
+	id, _ := strconv.Atoi(explodedURL[4])
+
+	err := m.DB.DeleteReservation("activity_reservations", id)
+	if err != nil {
+		log.Println("Error Deleting a reservation", err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-show-reservations?ac=activity", currentUser.ID), http.StatusSeeOther)
+}
+
 
 // Make a Reservation Calender and display it
 func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Request) {

@@ -1105,6 +1105,147 @@ func (m *PostgresDBRepo) UpdateHotelReservation(res models.HotelRoomReservation,
 	return nil
 }
 
+
+// Adds an activity reservation to the database
+func (m *PostgresDBRepo) MakeActivityReservation(res models.ActivityReservation) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+	INSERT INTO activity_reservations (first_name, last_name, activity_id, reservation_date, num_people, phone_number, email, processed, created_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	_, err := m.DB.QueryContext(ctx, query,
+		res.FirstName,
+		res.LastName,
+		res.ActivityID,
+		res.ResDate,
+		res.NumPeople,
+		res.PhoneNumber,
+		res.Email,
+		0,
+		res.CreatedAt,
+		res.UpdatedAt,
+	)
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+
+// Gets all the Activity Reservations From the Database
+func (m *PostgresDBRepo) GetAllActivityReservations(showNew bool) ([]models.ActivityReservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var res []models.ActivityReservation
+	var query string
+	var processed int
+
+	if showNew {
+		processed = 0
+	} else {
+		processed = 1
+	}
+
+	query = fmt.Sprintf(`
+		SELECT ar.id, first_name, last_name, activity_id, reservation_date, num_people, phone_number, ar.email, activity_name, location
+		FROM activity_reservations ar
+		LEFT JOIN activity a ON (ar.activity_id = a.id)
+		WHERE ar.processed = %d
+		ORDER BY ar.reservation_date ASC
+	`, processed)
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		log.Println("Cannot execute the select query: ")
+		return res, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var i models.ActivityReservation
+		err := rows.Scan(
+			&i.ReservationID,
+			&i.FirstName,
+			&i.LastName,
+			&i.ActivityID,
+			&i.ResDate,
+			&i.NumPeople,
+			&i.PhoneNumber,
+			&i.Email,
+			&i.Activity.ActivityName,
+			&i.Activity.Location,
+		)
+		if err != nil {
+			log.Println("Error scanning the rows into variables: GetAllActivityResrevations")
+			return res, err
+		}
+		res = append(res, i)
+	}
+
+	if err = rows.Err(); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+// Get One Activity Reservation By ID
+func (m *PostgresDBRepo) GetActivityReseravtionByID(id int) (models.ActivityReservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var i models.ActivityReservation
+
+	query := `
+		SELECT a.id, first_name, last_name, activity_id, reservation_date, num_people, phone_number, ar.email, activity_name, location
+		FROM activity_reservations ar
+		LEFT JOIN activity a ON (ar.activity_id = a.id)
+		WHERE ar.id = $1
+		ORDER BY ar.reservation_date ASC
+	`
+
+	row := m.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&i.ReservationID,
+		&i.FirstName,
+		&i.LastName,
+		&i.ActivityID,
+		&i.ResDate,
+		&i.NumPeople,
+		&i.PhoneNumber,
+		&i.Email,
+		&i.Activity.ActivityName,
+		&i.Activity.Location,
+	)
+	if err != nil {
+		return i, err
+	}
+
+	return i, nil
+}
+
+// Funciton to Update a Reservation :: Recreational Activity
+func (m *PostgresDBRepo) UpdateActivityReservation(res models.ActivityReservation, id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `
+		UPDATE activity_reservations
+		SET num_people = $1, 
+			phone_number = $2, email = $3
+		WHERE id = $4
+	`
+	_, err := m.DB.ExecContext(ctx, query, res.NumPeople, res.PhoneNumber, res.Email, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+
 // Delete a Reseravtion In General
 func (m *PostgresDBRepo) DeleteReservation(tableName string, id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)

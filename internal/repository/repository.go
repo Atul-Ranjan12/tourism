@@ -50,6 +50,13 @@ type DatabaseRepo interface {
 	GetHotelReseravtionByID(id int) (models.HotelRoomReservation, error)
 	UpdateHotelReservation(res models.HotelRoomReservation, id int) error
 
+
+	//Recreational Activity Reservation Functions
+	MakeActivityReservation(res models.ActivityReservation) error
+	GetAllActivityReservations(showNew bool) ([]models.ActivityReservation, error)
+	GetActivityReseravtionByID(id int) (models.ActivityReservation, error)
+	UpdateActivityReservation(res models.ActivityReservation, id int) error
+
 	// In general Delete Reservation
 	DeleteReservation(tableName string, id int) error
 }

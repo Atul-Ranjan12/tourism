@@ -1507,7 +1507,32 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 	intMap := make(map[string]int)
 	intMap["days_in_month"] = lastOfMonth.Day()
 
-	render.Template(w, r, "merchant-reservation-calender-bus.page.tmpl", &models.TemplateData{
+	// Get the calender month data
+	activeDays := addActiveDays(firstOfMonth)
+
+	// Populate the calender
+	disabledDaysStart := addInvalidDaysStart(firstOfMonth)
+
+	disabledDaysEnd := addInvalidEnd(lastOfMonth)
+
+	data["disabledDaysStart"] = disabledDaysStart
+	// Populate the first week of the calender
+	data["first_active_days"] = activeDays[0]
+	data["second_active_days"] = activeDays[1]
+	data["third_active_days"] = activeDays[2]
+	data["fourth_active_days"] = activeDays[3]
+	data["fifth_active_days"] = activeDays[4]
+
+	if len(activeDays) > 5 {
+		data["more_than_5"] = 1
+		data["sixth_active_days"] = activeDays[5]
+	} else {
+		data["more_than_5"] = 0
+	}
+
+	data["disabledDaysEnd"] = disabledDaysEnd
+
+	render.Template(w, r, "merchant-show-reservation-calender.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
 		Data:      data,
 		IntMap:    intMap,

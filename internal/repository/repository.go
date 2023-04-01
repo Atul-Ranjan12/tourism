@@ -64,4 +64,8 @@ type DatabaseRepo interface {
 
 	// Functions to get all the item reveiws:
 	GetItemReviews(catID int, itemID int) ([]models.ItemReview, error)
+
+	GetActivityReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
+	GetHotelReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
+	GetBusReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
 }

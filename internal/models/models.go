@@ -193,6 +193,11 @@ type CatItemReview struct {
 	Review   []ItemReview
 }
 
+type ReservationCalendar struct {
+	Month        string
+	Reservations []int
+}
+
 type CalenderDay struct {
 	Day    int
 	NumRes int

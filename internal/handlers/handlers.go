@@ -1947,6 +1947,103 @@ func (m *Repository) PostShowAddReview(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/add-review", http.StatusSeeOther)
 }
 
+
+
+/* ----------------------------------------------test-start-----------------------------------------------*/
+func(m *Repository) GetActivityByMonth(w http.ResponseWriter,r *http.Request){
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Declare a variable to show the display reviews:
+
+	// Get the MerchantID from the UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+	var ReservationCalendarActivity models.ReservationCalendar
+	ReservationCalendarActivity,err=m.DB.GetActivityReservationByMonth(int(time.Now().Month()),merchantID)
+	if err!=nil{
+		log.Println(err)
+
+		return
+	}
+	log.Println(ReservationCalendarActivity)
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
+}
+
+
+func(m *Repository) GetHotelByMonth(w http.ResponseWriter,r *http.Request){
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Declare a variable to show the display reviews:
+
+	// Get the MerchantID from the UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+	var ReservationCalendarHotel models.ReservationCalendar
+	ReservationCalendarHotel,err=m.DB.GetHotelReservationByMonth(int(time.Now().Month()),merchantID)
+	if err!=nil{
+		log.Println(err)
+
+		return
+	}
+	log.Println(ReservationCalendarHotel)
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
+}
+
+func(m *Repository) GetBusByMonth(w http.ResponseWriter,r *http.Request){
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Declare a variable to show the display reviews:
+
+	// Get the MerchantID from the UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+	var ReservationCalendarBus models.ReservationCalendar
+	ReservationCalendarBus,err=m.DB.GetBusReservationByMonth(int(time.Now().Month()),merchantID)
+	if err!=nil{
+		log.Println(err)
+
+		return
+	}
+	log.Println(ReservationCalendarBus)
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
+}
+
+
+/* ----------------------------------------------test-end-----------------------------------------------*/
+
+
+
+
 // Function to show the reviews page
 func (m *Repository) ShowReviewsPage(w http.ResponseWriter, r *http.Request) {
 	// Getting the current User from the session: for the main merchant layout

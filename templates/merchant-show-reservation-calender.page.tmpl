@@ -85,41 +85,41 @@ Reservation Calender
       {{range $inactiveStart}}
       <div class="calendar__day inactive">
         <span class="calendar__date">{{.}}</span>
-        <span class="calendar__task">2</span>
+        <span class="calendar__task">0</span>
       </div>
       {{end}}
 
       {{range $firstWeek}}
-      <div class="calendar__day">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
         <span class="calendar__date">{{.Day}}</span>
-        <span class="calendar__task">4</span>
+        <span class="calendar__task">{{.NumRes}}</span>
       </div>
       {{end}}
     </section>
 
     <section class="calendar__week">
       {{range $secondWeek}}
-      <div class="calendar__day">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
         <span class="calendar__date">{{.Day}}</span>
-        <span class="calendar__task">4</span>
+        <span class="calendar__task">{{.NumRes}}</span>
       </div>
       {{end}}
     </section>
 
     <section class="calendar__week">
       {{range $thirdWeek}}
-      <div class="calendar__day">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
         <span class="calendar__date">{{.Day}}</span>
-        <span class="calendar__task">4</span>
+        <span class="calendar__task">{{.NumRes}}</span>
       </div>
       {{end}}
     </section>
 
     <section class="calendar__week">
       {{range $fourthWeek}}
-      <div class="calendar__day">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
         <span class="calendar__date">{{.Day}}</span>
-        <span class="calendar__task">4</span>
+        <span class="calendar__task">{{.NumRes}}</span>
       </div>
       {{end}}
     </section>
@@ -128,16 +128,16 @@ Reservation Calender
 
     <section class="calendar__week">
       {{range $fifthWeek}}
-      <div class="calendar__day">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
         <span class="calendar__date">{{.Day}}</span>
-        <span class="calendar__task">4</span>
+        <span class="calendar__task">{{.NumRes}}</span>
       </div>
       {{end}}
       {{if eq $nextRow 0}}
       {{range $inactiveEnd}}
       <div class="calendar__day inactive">
         <span class="calendar__date">{{.}}</span>
-        <span class="calendar__task">2</span>
+        <span class="calendar__task">0</span>
       </div>
       {{end}}
       {{end}}
@@ -148,15 +148,15 @@ Reservation Calender
     {{$sixthweek := index .Data "sixth_active_days"}}
     <section class="calendar__week">
       {{range $sixthweek}}
-      <div class="calendar__day">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
         <span class="calendar__date">{{.Day}}</span>
-        <span class="calendar__task">4</span>
+        <span class="calendar__task">{{.NumRes}}</span>
       </div>
       {{end}}
       {{range $inactiveEnd}}
       <div class="calendar__day inactive">
         <span class="calendar__date">{{.}}</span>
-        <span class="calendar__task">2</span>
+        <span class="calendar__task">0</span>
       </div>
       {{end}}
     </section>

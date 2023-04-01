@@ -1462,6 +1462,12 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 
 	// Get the current user
 	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	// Get the merchantID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
 
 	now := time.Now()
 
@@ -1514,6 +1520,27 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 	disabledDaysStart := addInvalidDaysStart(firstOfMonth)
 
 	disabledDaysEnd := addInvalidEnd(lastOfMonth)
+
+	// Get All the Reservations and put it in activeDays
+	var ReservationCalendarHotel models.ReservationCalendar
+	ReservationCalendarHotel, err = m.DB.GetHotelReservationByMonth(int(now.Month()), merchantID)
+	if err != nil {
+		log.Println("Error occured getting all the resetvations for the month: ", err)
+		return
+	}
+	var realActiveDays [][]models.CalenderDay
+	var realWeek []models.CalenderDay
+
+	for _, week := range activeDays {
+		for _, day := range week {
+			day.UpdateNumRes(ReservationCalendarHotel.Reservations[day.Day])
+			realWeek = append(realWeek, day)
+		}
+		realActiveDays = append(realActiveDays, realWeek)
+		realWeek = []models.CalenderDay{}
+	}
+
+	activeDays = realActiveDays
 
 	data["disabledDaysStart"] = disabledDaysStart
 	// Populate the first week of the calender
@@ -1947,10 +1974,8 @@ func (m *Repository) PostShowAddReview(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/add-review", http.StatusSeeOther)
 }
 
-
-
 /* ----------------------------------------------test-start-----------------------------------------------*/
-func(m *Repository) GetActivityByMonth(w http.ResponseWriter,r *http.Request){
+func (m *Repository) GetActivityByMonth(w http.ResponseWriter, r *http.Request) {
 	// Getting the current User from the session: for the main merchant layout
 	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
 	stringMap := make(map[string]string)
@@ -1969,8 +1994,8 @@ func(m *Repository) GetActivityByMonth(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	var ReservationCalendarActivity models.ReservationCalendar
-	ReservationCalendarActivity,err=m.DB.GetActivityReservationByMonth(int(time.Now().Month()),merchantID)
-	if err!=nil{
+	ReservationCalendarActivity, err = m.DB.GetActivityReservationByMonth(int(time.Now().Month()), merchantID)
+	if err != nil {
 		log.Println(err)
 
 		return
@@ -1979,8 +2004,7 @@ func(m *Repository) GetActivityByMonth(w http.ResponseWriter,r *http.Request){
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
 
-
-func(m *Repository) GetHotelByMonth(w http.ResponseWriter,r *http.Request){
+func (m *Repository) GetHotelByMonth(w http.ResponseWriter, r *http.Request) {
 	// Getting the current User from the session: for the main merchant layout
 	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
 	stringMap := make(map[string]string)
@@ -1999,17 +2023,16 @@ func(m *Repository) GetHotelByMonth(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	var ReservationCalendarHotel models.ReservationCalendar
-	ReservationCalendarHotel,err=m.DB.GetHotelReservationByMonth(int(time.Now().Month()),merchantID)
-	if err!=nil{
+	ReservationCalendarHotel, err = m.DB.GetHotelReservationByMonth(int(time.Now().Month()), merchantID)
+	if err != nil {
 		log.Println(err)
-
 		return
 	}
 	log.Println(ReservationCalendarHotel)
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
 
-func(m *Repository) GetBusByMonth(w http.ResponseWriter,r *http.Request){
+func (m *Repository) GetBusByMonth(w http.ResponseWriter, r *http.Request) {
 	// Getting the current User from the session: for the main merchant layout
 	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
 	stringMap := make(map[string]string)
@@ -2028,8 +2051,8 @@ func(m *Repository) GetBusByMonth(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	var ReservationCalendarBus models.ReservationCalendar
-	ReservationCalendarBus,err=m.DB.GetBusReservationByMonth(int(time.Now().Month()),merchantID)
-	if err!=nil{
+	ReservationCalendarBus, err = m.DB.GetBusReservationByMonth(int(time.Now().Month()), merchantID)
+	if err != nil {
 		log.Println(err)
 
 		return
@@ -2038,11 +2061,7 @@ func(m *Repository) GetBusByMonth(w http.ResponseWriter,r *http.Request){
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
 
-
 /* ----------------------------------------------test-end-----------------------------------------------*/
-
-
-
 
 // Function to show the reviews page
 func (m *Repository) ShowReviewsPage(w http.ResponseWriter, r *http.Request) {

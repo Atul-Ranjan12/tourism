@@ -23,6 +23,7 @@ var app config.AppConfig
 var session *scs.SessionManager
 
 func main() {
+	os.Setenv("TZ", "UTC")
 	db, err := run()
 	if err != nil {
 		log.Println("An unexpected error occured while initializing the database, quiting with error: ", err)
@@ -72,7 +73,7 @@ func run() (*driver.DB, error) {
 
 	// TODO: Handle connection to the database in this section
 	log.Println("Connecting to database....")
-	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=tourism user=postgres password=krishna")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=tourism user=atulranjan password=")
 	if err != nil {
 		log.Fatal("Cannot connect to the database, dying..")
 	}

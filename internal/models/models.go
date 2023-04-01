@@ -195,10 +195,14 @@ type CatItemReview struct {
 
 type ReservationCalendar struct {
 	Month        string
-	Reservations []int
+	Reservations map[int]int
 }
 
 type CalenderDay struct {
 	Day    int
 	NumRes int
+}
+
+func (d *CalenderDay) UpdateNumRes(x int) {
+	d.NumRes = x
 }

@@ -47,7 +47,7 @@
     left: 0;
     right: 0;
     border-radius: 0;
-    width: 100%;
+    width: 70%;
     overflow: hidden;
     max-width: 1020px;
     min-width: 450px;
@@ -364,6 +364,10 @@
     justify-content: space-between;
     width: 100%;
     padding: 1.9rem 0.2rem 0.2rem;
+  }
+
+  .booked {
+    background: #98fb98;
   }
 
   .calendar__date {

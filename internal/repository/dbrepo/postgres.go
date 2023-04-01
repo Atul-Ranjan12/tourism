@@ -651,7 +651,7 @@ func (m *PostgresDBRepo) MakeBusReservation(busRes models.BusReservationData) er
 }
 
 // Function to get all the bus Reservations from the database
-func (m *PostgresDBRepo) GetAllBusReservations(showNew bool) ([]models.BusReservationData, error) {
+func (m *PostgresDBRepo) GetAllBusReservations(showNew bool, mid int) ([]models.BusReservationData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -670,11 +670,11 @@ func (m *PostgresDBRepo) GetAllBusReservations(showNew bool) ([]models.BusReserv
 					start, stop, phone_number, email, bus_name, bus_no_plate
 			FROM bus_reservations br
 			LEFT JOIN bus b ON (br.bus_id = b.id)
-			WHERE br.processed = %d
+			WHERE br.processed = %d AND merchant_id = $1
 			ORDER BY br.reservation_date ASC
 		`, processed)
 
-	rows, err := m.DB.QueryContext(ctx, query)
+	rows, err := m.DB.QueryContext(ctx, query, mid)
 	if err != nil {
 		log.Println("Cannot execute this query select from bus reservations table")
 		return busRes, err
@@ -992,7 +992,7 @@ func (m *PostgresDBRepo) MakeHotelReservation(res models.HotelRoomReservation) e
 }
 
 // Gets all the Hotel Reservations From the Database
-func (m *PostgresDBRepo) GetAllHotelReservations(showNew bool) ([]models.HotelRoomReservation, error) {
+func (m *PostgresDBRepo) GetAllHotelReservations(showNew bool, mid int) ([]models.HotelRoomReservation, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -1011,11 +1011,11 @@ func (m *PostgresDBRepo) GetAllHotelReservations(showNew bool) ([]models.HotelRo
 		reservation_date_end, num_people, phone_number, email, hotel_name, hotel_room_name
 		FROM hotel_reservations r
 		LEFT JOIN hotel_room h ON (r.hotel_id = h.id)
-		WHERE r.processed = %d
+		WHERE r.processed = %d AND merchant_id = $1
 		ORDER BY r.reservation_date_end ASC
 	`, processed)
 
-	rows, err := m.DB.QueryContext(ctx, query)
+	rows, err := m.DB.QueryContext(ctx, query, mid)
 	if err != nil {
 		log.Println("Cannot execute the select query: ")
 		return res, err
@@ -1105,7 +1105,6 @@ func (m *PostgresDBRepo) UpdateHotelReservation(res models.HotelRoomReservation,
 	return nil
 }
 
-
 // Adds an activity reservation to the database
 func (m *PostgresDBRepo) MakeActivityReservation(res models.ActivityReservation) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -1135,7 +1134,7 @@ func (m *PostgresDBRepo) MakeActivityReservation(res models.ActivityReservation)
 }
 
 // Gets all the Activity Reservations From the Database
-func (m *PostgresDBRepo) GetAllActivityReservations(showNew bool) ([]models.ActivityReservation, error) {
+func (m *PostgresDBRepo) GetAllActivityReservations(showNew bool, mid int) ([]models.ActivityReservation, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -1153,11 +1152,11 @@ func (m *PostgresDBRepo) GetAllActivityReservations(showNew bool) ([]models.Acti
 		SELECT ar.id, first_name, last_name, activity_id, reservation_date, num_people, phone_number, ar.email, activity_name, location
 		FROM activity_reservations ar
 		LEFT JOIN activity a ON (ar.activity_id = a.id)
-		WHERE ar.processed = %d
+		WHERE ar.processed = %d AND merchant_id = $1
 		ORDER BY ar.reservation_date ASC
 	`, processed)
 
-	rows, err := m.DB.QueryContext(ctx, query)
+	rows, err := m.DB.QueryContext(ctx, query, mid)
 	if err != nil {
 		log.Println("Cannot execute the select query: ")
 		return res, err
@@ -1243,8 +1242,6 @@ func (m *PostgresDBRepo) UpdateActivityReservation(res models.ActivityReservatio
 	}
 	return nil
 }
-
-
 
 // Delete a Reseravtion In General
 func (m *PostgresDBRepo) DeleteReservation(tableName string, id int) error {

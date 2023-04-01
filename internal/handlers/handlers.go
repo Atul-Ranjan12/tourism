@@ -593,8 +593,8 @@ func (m *Repository) AdminAddMerchantItems(w http.ResponseWriter, r *http.Reques
 		log.Println("error in getting activities", err)
 	}
 	data["bus"] = buses
-	data["activity"]=activities
-	data["has_activity"]=len(activities)
+	data["activity"] = activities
+	data["has_activity"] = len(activities)
 	data["activity"] = activities
 	data["has_bus"] = len(buses)
 
@@ -899,21 +899,28 @@ func (m *Repository) ShowAllReservations(w http.ResponseWriter, r *http.Request)
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
+	// Get MerchantID from UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting user id from merchantID", err)
+		return
+	}
+
 	// Get all the reservations from the database for the bus
-	busRes, err := m.DB.GetAllBusReservations(true)
+	busRes, err := m.DB.GetAllBusReservations(true, merchantID)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
 
 	// Get all the reservations from the database for Hotels:
-	hotelRes, err := m.DB.GetAllHotelReservations(true)
+	hotelRes, err := m.DB.GetAllHotelReservations(true, merchantID)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
-	activityRes,err:=m.DB.GetAllActivityReservations(true)
-	if err !=nil{
+	activityRes, err := m.DB.GetAllActivityReservations(true, merchantID)
+	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
@@ -926,7 +933,7 @@ func (m *Repository) ShowAllReservations(w http.ResponseWriter, r *http.Request)
 	data["reservations_hotel"] = hotelRes
 
 	// add reservations into data variable for ativities
-	data["reservations_activity"]=activityRes
+	data["reservations_activity"] = activityRes
 
 	render.Template(w, r, "merchant-show-reservations.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
@@ -1012,19 +1019,26 @@ func (m *Repository) ShowReservationsProcessed(w http.ResponseWriter, r *http.Re
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
+	// Get merchant ID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchantID from userID", err)
+		return
+	}
+
 	// Get all the reservations from the database
-	busRes, err := m.DB.GetAllBusReservations(false)
+	busRes, err := m.DB.GetAllBusReservations(false, merchantID)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
-	hotelRes, err := m.DB.GetAllHotelReservations(false)
+	hotelRes, err := m.DB.GetAllHotelReservations(false, merchantID)
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
-	activityRes,err:=m.DB.GetAllActivityReservations(false)
-	if err!=nil{
+	activityRes, err := m.DB.GetAllActivityReservations(false, merchantID)
+	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
@@ -1032,7 +1046,7 @@ func (m *Repository) ShowReservationsProcessed(w http.ResponseWriter, r *http.Re
 	// Add the reservations into the data variable
 	data["reservations"] = busRes
 	data["reservations_hotel"] = hotelRes
-	data["reservations_activity"]=activityRes
+	data["reservations_activity"] = activityRes
 
 	stringMap["is_processed"] = "yes"
 
@@ -1303,7 +1317,6 @@ func (m *Repository) PostAdminDeleteActivity(w http.ResponseWriter, r *http.Requ
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-add-items", currentUser.ID), http.StatusSeeOther)
 }
 
-
 // Function to display the Make Reservation Page for the activity Reservations
 func (m *Repository) ShowMakeActivityReservation(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "make-activity-reservation.page.tmpl", &models.TemplateData{})
@@ -1325,15 +1338,15 @@ func (m *Repository) PostShowMakeActivityReservation(w http.ResponseWriter, r *h
 
 	// Make the reservation Data
 	res := models.ActivityReservation{
-		ActivityID:   activityID,
-		FirstName:    r.Form.Get("first_name"),
-		LastName:     r.Form.Get("last_name"),
-		ResDate:      resDate,
-		NumPeople:    numPeople,
-		PhoneNumber:  r.Form.Get("phone"),
-		Email:        r.Form.Get("email"),
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		ActivityID:  activityID,
+		FirstName:   r.Form.Get("first_name"),
+		LastName:    r.Form.Get("last_name"),
+		ResDate:     resDate,
+		NumPeople:   numPeople,
+		PhoneNumber: r.Form.Get("phone"),
+		Email:       r.Form.Get("email"),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	log.Println(res)
 
@@ -1443,7 +1456,6 @@ func (m *Repository) DeleteActivityReservation(w http.ResponseWriter, r *http.Re
 
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/merchant-show-reservations?ac=activity", currentUser.ID), http.StatusSeeOther)
 }
-
 
 // Make a Reservation Calender and display it
 func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Request) {

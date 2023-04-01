@@ -192,3 +192,8 @@ type CatItemReview struct {
 	ItemName string
 	Review   []ItemReview
 }
+
+type CalenderDay struct {
+	Day    int
+	NumRes int
+}

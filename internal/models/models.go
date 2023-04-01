@@ -192,3 +192,8 @@ type CatItemReview struct {
 	ItemName string
 	Review   []ItemReview
 }
+
+type ReservationCalendar struct{
+	Month string
+	Reservations []int
+}

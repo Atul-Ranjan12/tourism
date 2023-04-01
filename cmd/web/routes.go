@@ -152,6 +152,12 @@ func routes(app *config.AppConfig) http.Handler {
 		// 3. merchant delete recreational activity
 		mux.Get("/{src}/add-activity/delete/{id}", handlers.Repo.PostAdminDeleteActivity)
 
+
+		//test for count of reservation
+		mux.Get("/{src}/getActivityReservations",handlers.Repo.GetActivityByMonth)
+		mux.Get("/{src}/getHotelReservations",handlers.Repo.GetHotelByMonth)
+		mux.Get("/{src}/getBusReservations",handlers.Repo.GetBusByMonth)
+
 	})
 
 	return mux

@@ -33,7 +33,7 @@ type DatabaseRepo interface {
 	MakeBusReservation(busRes models.BusReservationData) error
 
 	// Bus Reservation Functions
-	GetAllBusReservations(showNew bool) ([]models.BusReservationData, error)
+	GetAllBusReservations(showNew bool, mid int) ([]models.BusReservationData, error)
 	GetReservationByID(id int) (models.BusReservationData, error)
 	ProcessReservation(table string, id int) error
 	UpdateBusReservation(res models.BusReservationData, id int) error
@@ -46,14 +46,13 @@ type DatabaseRepo interface {
 
 	// Hotel Room Reservation Functions
 	MakeHotelReservation(res models.HotelRoomReservation) error
-	GetAllHotelReservations(showNew bool) ([]models.HotelRoomReservation, error)
+	GetAllHotelReservations(showNew bool, mid int) ([]models.HotelRoomReservation, error)
 	GetHotelReseravtionByID(id int) (models.HotelRoomReservation, error)
 	UpdateHotelReservation(res models.HotelRoomReservation, id int) error
 
-
 	//Recreational Activity Reservation Functions
 	MakeActivityReservation(res models.ActivityReservation) error
-	GetAllActivityReservations(showNew bool) ([]models.ActivityReservation, error)
+	GetAllActivityReservations(showNew bool, mid int) ([]models.ActivityReservation, error)
 	GetActivityReseravtionByID(id int) (models.ActivityReservation, error)
 	UpdateActivityReservation(res models.ActivityReservation, id int) error
 
@@ -65,4 +64,8 @@ type DatabaseRepo interface {
 
 	// Functions to get all the item reveiws:
 	GetItemReviews(catID int, itemID int) ([]models.ItemReview, error)
+
+	GetActivityReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
+	GetHotelReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
+	GetBusReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
 }

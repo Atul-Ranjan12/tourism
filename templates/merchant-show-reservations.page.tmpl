@@ -273,7 +273,6 @@ body {font-family: Arial;}
 
 <script>
 {{$active := index .StringMap "active"}}
-console.log("Hello World");
 
 var i, tabcontent;
 tabcontent = document.getElementsByClassName("tabcontent");
@@ -288,16 +287,15 @@ for (const [key, value] of urlParams) {
 }
 
 if (urlParams.get('ac') === "hotel"){
-  console.log("Reached Here!")
   document.getElementById("hotel_reservation").style.display = "block";
-  document.getElementById("hotel_reservation").className += " active"
+  document.getElementById("ex1-tab-2").className += " active"
 }else if(urlParams.get('ac') === "activity") {
   document.getElementById("activity_reservation").style.display = "block";
-  document.getElementById("activity_reservation").className += " active"
+  document.getElementById("ex1-tab-3").className += " active"
 }
 else{
   document.getElementById("bus_reservation").style.display = "block";
-  document.getElementById("bus_reservation").className += " active"
+  document.getElementById("ex1-tab-1").className += " active"
 }
 
 

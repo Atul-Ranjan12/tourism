@@ -1471,6 +1471,15 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 
 	now := time.Now()
 
+	// Get the current tab of the user
+	var currTab string
+	if r.URL.Query().Get("t") != "" {
+		currTab = r.URL.Query().Get("t")
+	} else {
+		currTab = "bus"
+	}
+
+	// Get the Year and the Month
 	if r.URL.Query().Get("y") != "" {
 		year, _ := strconv.Atoi(r.URL.Query().Get("y"))
 		month, _ := strconv.Atoi(r.URL.Query().Get("m"))
@@ -1479,6 +1488,7 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 	}
 
 	data := make(map[string]interface{})
+	// Put the date in the tempalte
 	data["now"] = now
 
 	data["user_details"] = currentUser
@@ -1504,6 +1514,9 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 	stringMap["this_month"] = now.Format("01")
 	stringMap["this_month_year"] = now.Format("2006")
 
+	// Add the tab
+	stringMap["tab"] = currTab
+
 	// get first and last day of the month
 	currentYear, currentMonth, _ := now.Date()
 	currentLocation := now.Location()
@@ -1521,19 +1534,34 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 
 	disabledDaysEnd := addInvalidEnd(lastOfMonth)
 
-	// Get All the Reservations and put it in activeDays
-	var ReservationCalendarHotel models.ReservationCalendar
-	ReservationCalendarHotel, err = m.DB.GetHotelReservationByMonth(int(now.Month()), merchantID)
-	if err != nil {
-		log.Println("Error occured getting all the resetvations for the month: ", err)
-		return
+	var ReservationCalendar models.ReservationCalendar
+	// 1. If The current tab is Bus :: Get all Bus Reservations:
+	if currTab == "bus" {
+		ReservationCalendar, err = m.DB.GetBusReservationByMonth(int(now.Month()), merchantID)
+		if err != nil {
+			log.Println("Error occured getting all the reservations for the month in bus: ", err)
+			return
+		}
+	} else if currTab == "hotel" {
+		ReservationCalendar, err = m.DB.GetHotelReservationByMonth(int(now.Month()), merchantID)
+		if err != nil {
+			log.Println("Error getting all the reservations for the month in hotel: ", err)
+			return
+		}
+	} else if currTab == "recreation" {
+		ReservationCalendar, err = m.DB.GetActivityReservationByMonth(int(now.Month()), merchantID)
+		if err != nil {
+			log.Println("Error getting all the reservations for the month in activity: ", err)
+			return
+		}
 	}
+
 	var realActiveDays [][]models.CalenderDay
 	var realWeek []models.CalenderDay
 
 	for _, week := range activeDays {
 		for _, day := range week {
-			day.UpdateNumRes(ReservationCalendarHotel.Reservations[day.Day])
+			day.UpdateNumRes(ReservationCalendar.Reservations[day.Day])
 			realWeek = append(realWeek, day)
 		}
 		realActiveDays = append(realActiveDays, realWeek)
@@ -2061,7 +2089,6 @@ func (m *Repository) GetBusByMonth(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
 
-
 // function to retrievee the bus Reservations of a day
 func (m *Repository) GetBusByDay(w http.ResponseWriter, r *http.Request) {
 	// Getting the current User from the session: for the main merchant layout
@@ -2073,7 +2100,6 @@ func (m *Repository) GetBusByDay(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
-
 	// Get the MerchantID from the UserID
 	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
 	if err != nil {
@@ -2083,8 +2109,8 @@ func (m *Repository) GetBusByDay(w http.ResponseWriter, r *http.Request) {
 	var busReservations []models.BusReservationData
 
 	/* You can fetch the date attribute from the request and pass it to the function */
-	date:=time.Now()
-	
+	date := time.Now()
+
 	busReservations, err = m.DB.GetBusReservationByDay(date, merchantID)
 	if err != nil {
 		log.Println(err)
@@ -2093,8 +2119,8 @@ func (m *Repository) GetBusByDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//The reservations can be sent as the response here
-	for i:=0; i<len(busReservations);i++{
-		log.Println("Bus Reservation ",i," : ",busReservations[i].FirstName,"----",busReservations[i].Bus.BusName)
+	for i := 0; i < len(busReservations); i++ {
+		log.Println("Bus Reservation ", i, " : ", busReservations[i].FirstName, "----", busReservations[i].Bus.BusName)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
@@ -2110,7 +2136,6 @@ func (m *Repository) GetHotelByDay(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
-
 	// Get the MerchantID from the UserID
 	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
 	if err != nil {
@@ -2120,8 +2145,8 @@ func (m *Repository) GetHotelByDay(w http.ResponseWriter, r *http.Request) {
 	var hotelReservations []models.HotelRoomReservation
 
 	/* You can fetch the date attribute from the request and pass it to the function */
-	date:=time.Now()
-	
+	date := time.Now()
+
 	hotelReservations, err = m.DB.GetHotelReservationByDay(date, merchantID)
 	if err != nil {
 		log.Println(err)
@@ -2130,12 +2155,11 @@ func (m *Repository) GetHotelByDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//The reservations can be sent as the response here
-	for i:=0; i<len(hotelReservations);i++{
-		log.Println("Hotel Reservation ",i," : ",hotelReservations[i].FirstName,"----",hotelReservations[i].Room.HotelName)
+	for i := 0; i < len(hotelReservations); i++ {
+		log.Println("Hotel Reservation ", i, " : ", hotelReservations[i].FirstName, "----", hotelReservations[i].Room.HotelName)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
-
 
 // function to retrievee the Activity Reservations of a day
 func (m *Repository) GetActivityByDay(w http.ResponseWriter, r *http.Request) {
@@ -2148,7 +2172,6 @@ func (m *Repository) GetActivityByDay(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
-
 	// Get the MerchantID from the UserID
 	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
 	if err != nil {
@@ -2159,19 +2182,18 @@ func (m *Repository) GetActivityByDay(w http.ResponseWriter, r *http.Request) {
 
 	/* You can fetch the date attribute from the request and pass it to the function */
 
-
 	//code to convert month, day, year to required format
 	// Convert the month integer to a string with leading zeros
-	month:=4
-	year:=2023
-	day:=2
-	now:=time.Now()
-	targetDate:= time.Date(year, time.Month(month), day, 0, 0, 0, 0, now.Location())
+	month := 4
+	year := 2023
+	day := 2
+	now := time.Now()
+	targetDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, now.Location())
 
 	//
 
 	// date:=time.Now()
-	
+
 	activityReservations, err = m.DB.GetActivityReservationByDay(targetDate, merchantID)
 	if err != nil {
 		log.Println(err)
@@ -2179,16 +2201,12 @@ func (m *Repository) GetActivityByDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	//The reservations can be sent as the response here
-	for i:=0; i<len(activityReservations);i++{
-		log.Println("Activity Reservation ",i," : ",activityReservations[i].FirstName,"----",activityReservations[i].Activity.ActivityName)
+	for i := 0; i < len(activityReservations); i++ {
+		log.Println("Activity Reservation ", i, " : ", activityReservations[i].FirstName, "----", activityReservations[i].Activity.ActivityName)
 	}
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
-
-
-
 
 /* ----------------------------------------------test-end-----------------------------------------------*/
 

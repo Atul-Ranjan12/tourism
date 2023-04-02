@@ -365,9 +365,15 @@
     width: 100%;
     padding: 1.9rem 0.2rem 0.2rem;
   }
+  .calendar__day:hover {
+    background: linear-gradient(to right, #F5AF41, #F1C40F);
+  }
 
   .booked {
     background: #98fb98;
+  }
+  .booked:hover {
+    background: linear-gradient(to right, #00BA47, #00D65D)
   }
 
   .calendar__date {

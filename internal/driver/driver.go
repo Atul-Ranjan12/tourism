@@ -62,5 +62,13 @@ func NewDatabase(dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 
+	timeQuery := `
+	SET TIMEZONE to 'UTC'
+	`
+	_, err = db.Exec(timeQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	return db, nil
 }

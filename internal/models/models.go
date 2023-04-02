@@ -198,13 +198,11 @@ type CalenderDay struct {
 	NumRes int
 }
 
-type ReservationCalendar struct{
-	Month string
-	Reservations []int
+func (d *CalenderDay) UpdateNumRes(x int) {
+	d.NumRes = x
 }
 
-type ReservationDetailsByDay struct{
-	Day int
-	numReservations int
-	ReservationNames []string
+type ReservationCalendar struct{
+	Month string
+	Reservations map[int]int
 }

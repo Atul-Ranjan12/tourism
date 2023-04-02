@@ -158,6 +158,12 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Get("/{src}/getHotelReservations",handlers.Repo.GetHotelByMonth)
 		mux.Get("/{src}/getBusReservations",handlers.Repo.GetBusByMonth)
 
+
+		// test for getting the day wise details
+		mux.Get("/{src}/getBusDetailsByDate",handlers.Repo.GetBusByDay)
+		mux.Get("/{src}/getHotelDetailsByDate",handlers.Repo.GetHotelByDay)
+		mux.Get("/{src}/getActivityDetailsByDate",handlers.Repo.GetActivityByDay)
+
 	})
 
 	return mux

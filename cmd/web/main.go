@@ -23,6 +23,7 @@ var app config.AppConfig
 var session *scs.SessionManager
 
 func main() {
+	os.Setenv("TZ", "UTC")
 	db, err := run()
 	if err != nil {
 		log.Println("An unexpected error occured while initializing the database, quiting with error: ", err)

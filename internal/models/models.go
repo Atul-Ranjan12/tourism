@@ -202,3 +202,9 @@ type ReservationCalendar struct{
 	Month string
 	Reservations []int
 }
+
+type ReservationDetailsByDay struct{
+	Day int
+	numReservations int
+	ReservationNames []string
+}

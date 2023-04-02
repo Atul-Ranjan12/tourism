@@ -1412,6 +1412,7 @@ func (m *PostgresDBRepo) GetHotelReservationByMonth(month int, mid int) (models.
 	
 	now := time.Now()
 	targetMonth := time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, now.Location())
+	log.Println(targetMonth)
 
     // Query to get the reservations for the given month and activity_id
     query := `
@@ -1514,6 +1515,71 @@ func (m *PostgresDBRepo) GetBusReservationByMonth(month int, mid int) (models.Re
             return res, err
         }
         reservationMap[day.Day()] = numReservations
+    }
+
+    // Create a ReservationCalendar object for the given month using the reservationMap
+    var rc models.ReservationCalendar
+    rc.Month = time.Month(month).String()
+    rc.Reservations = make([]int, 32)
+    for i := 1; i <= 31; i++ {
+        rc.Reservations[i] = reservationMap[i]
+    }
+
+    // Append the ReservationCalendar object to the result slice
+    res = rc
+
+    return res, nil
+
+}
+
+
+
+
+//function to get the Details of of Bus reservations in each day of the month
+func (m *PostgresDBRepo) GetBusReservationByDay(date time.Time, mid int) (models.ReservationDetailsByDay, error) {
+    // Convert the month integer to a string with leading zeros
+    // DayStr := fmt.Sprintf("%02d", day)
+    
+	// log.Println(monthStr)
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    var res models.ReservationDetailsByDay
+	
+	// now := time.Now()
+	// targetDay := time.Date(now.Year(), time.Month(month), 1, 0, 0, 0, 0, now.Location())
+
+    // Query to get the reservations for the given month and activity_id
+    query := `
+        SELECT DATE_TRUNC('day', bus_reservations.reservation_date) AS day,
+		COUNT(bus_reservations.id) AS num_reservations
+		STRING_AGG(bus.bus_name, ', ') AS reserved_buses
+		FROM bus_reservations
+		FULL OUTER JOIN bus ON bus_reservations.bus_id = bus.id
+	    WHERE 
+			AND bus_reservations.reservation_date::date = $2::DATE
+		AND bus.merchant_id = $1
+		GROUP BY DATE_TRUNC('day', bus_reservations.reservation_date)
+		ORDER BY day ASC
+    `
+
+    rows, err := m.DB.QueryContext(ctx, query, mid, date)
+    if err != nil {
+        log.Println("Cannot execute the select query: ", err)
+        return res, err
+    }
+    defer rows.Close()
+
+    // Loop through the rows of the result set and update the reservationMap
+    for rows.Next() {
+        var day time.Time
+        var numReservations int
+		var ReservationNames []string
+        err := rows.Scan(&day, &numReservations,&ReservationNames)
+        if err != nil {
+            log.Println("Error scanning row: ", err)
+            return res, err
+        }
     }
 
     // Create a ReservationCalendar object for the given month using the reservationMap

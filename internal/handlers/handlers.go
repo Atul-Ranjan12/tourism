@@ -1516,6 +1516,29 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 
 	// Add the tab
 	stringMap["tab"] = currTab
+	// Store information about the merchant in the tab:
+	if currTab == "bus" {
+		allBus, err := m.DB.GetAllBus(merchantID)
+		if err != nil {
+			log.Println("Error getting bus: ", err)
+			return
+		}
+		data["all_bus"] = allBus
+	} else if currTab == "hotel" {
+		allHotel, err := m.DB.GetAllHotelRooms(merchantID)
+		if err != nil {
+			log.Println("Error getting hotel", err)
+			return
+		}
+		data["all_hotel"] = allHotel
+	} else if currTab == "recreation" {
+		allActivity, err := m.DB.GetAllActivity(merchantID)
+		if err != nil {
+			log.Println("Error getting all activity", err)
+			return
+		}
+		data["all_activity"] = allActivity
+	}
 
 	// get first and last day of the month
 	currentYear, currentMonth, _ := now.Date()
@@ -1525,7 +1548,7 @@ func (m *Repository) ShowReservationCalender(w http.ResponseWriter, r *http.Requ
 
 	intMap := make(map[string]int)
 	intMap["days_in_month"] = lastOfMonth.Day()
-
+	intMap["date_today"] = now.Day()
 	// Get the calender month data
 	activeDays := addActiveDays(firstOfMonth)
 
@@ -2186,7 +2209,7 @@ func (m *Repository) GetActivityByDay(w http.ResponseWriter, r *http.Request) {
 	// Convert the month integer to a string with leading zeros
 	month := 4
 	year := 2023
-	day := 2
+	day := 12
 	now := time.Now()
 	targetDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, now.Location())
 
@@ -2301,6 +2324,78 @@ func (m *Repository) ShowReviewsPage(w http.ResponseWriter, r *http.Request) {
 	data["activity_reviews"] = activityReview
 
 	render.Template(w, r, "show-reviews.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+		Data:      data,
+	})
+}
+
+// Funciton to show Reservations per daty
+func (m *Repository) ShowReservationsPerDay(w http.ResponseWriter, r *http.Request) {
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+	// Get the MerchantID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+
+	// Code functionality Here:
+	// 1. Get Query string parameters:
+	month, _ := strconv.Atoi(r.URL.Query().Get("month"))
+	day, _ := strconv.Atoi(r.URL.Query().Get("day"))
+	year, _ := strconv.Atoi(r.URL.Query().Get("year"))
+	now := time.Now()
+
+	// Putting the dates in the template
+	data["month"] = month
+	data["day"] = day
+	data["year"] = year
+
+	targetDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, now.Location())
+
+	tab := r.URL.Query().Get("tab")
+
+	// Get all the reservatioons for that day:
+	var busReservations []models.BusReservationData
+	var hotelReservations []models.HotelRoomReservation
+	var activityReservations []models.ActivityReservation
+
+	// Put the tab info in the template
+	data["tab"] = tab
+
+	if tab == "bus" {
+		busReservations, err = m.DB.GetBusReservationByDay(targetDate, merchantID)
+		if err != nil {
+			log.Println("Error getting bus reservations: ", err)
+			return
+		}
+	} else if tab == "hotel" {
+		hotelReservations, err = m.DB.GetHotelReservationByDay(targetDate, merchantID)
+		if err != nil {
+			log.Println("Error getting reservations: hotel : ", err)
+			return
+		}
+	} else if tab == "recreation" {
+		activityReservations, err = m.DB.GetActivityReservationByDay(targetDate, merchantID)
+		if err != nil {
+			log.Println("Error getting reservaitons, activity: ", err)
+			return
+		}
+	}
+
+	data["bus_reservations"] = busReservations
+	data["hotel_reservations"] = hotelReservations
+	data["activity_reservations"] = activityReservations
+
+	render.Template(w, r, "merchant-show-res-day.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
 		Data:      data,
 	})

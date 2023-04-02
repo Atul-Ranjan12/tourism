@@ -28,6 +28,8 @@ Reservation Calender
 {{$fifthWeek := index .Data "fifth_active_days"}}
 {{$inactiveEnd := index .Data "disabledDaysEnd"}}
 
+{{$today := index .IntMap "date_today"}}
+
 <div class="title">
   <h4>Here is how your Calendar is Looking: </h4>
 </div>
@@ -109,18 +111,32 @@ Reservation Calender
       {{formatDate $now "January"}} {{formatDate $now "2006"}}
     </h2>
     <ul class="sidebar__list">
+      {{if eq $tab "bus"}}
+      {{$buses := index .Data "all_bus"}}
+      {{range $buses}}
       <li class="sidebar__list-item sidebaßr__list-item--complete">
-        <span class="list-item__time">8.30</span> Team Meeting
+        <span>{{.BusName}}</span> <br>{{.BusStart}} to {{.BusEnd}}
       </li>
-      <li class="sidebar__list-item sidebar__list-item--complete">
-        <span class="list-item__time">10.00</span> Lunch with Sasha
+      {{end}}
+      {{end}}
+
+      {{if eq $tab "hotel"}}
+      {{$hotels := index .Data "all_hotel"}}
+      {{range $hotels}}
+      <li class="sidebar__list-item sidebaßr__list-item--complete">
+        <span>{{.HotelName}}</span> <br>{{.HotelRoomName}}
       </li>
-      <li class="sidebar__list-item">
-        <span class="list-item__time">2.30</span> Design Review
+      {{end}}
+      {{end}}
+
+      {{if eq $tab "recreation"}}
+      {{$rec := index .Data "all_activity"}}
+      {{range $rec}}
+      <li class="sidebar__list-item sidebaßr__list-item--complete">
+        <span>{{.ActivityName}}</span> <br>{{.Location}}
       </li>
-      <li class="sidebar__list-item">
-        <span class="list-item__time">4.00</span> Get Groceries
-      </li>
+      {{end}}
+      {{end}}
     </ul>
   </aside>
 
@@ -145,16 +161,19 @@ Reservation Calender
       {{end}}
 
       {{range $firstWeek}}
-      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
-        <span class="calendar__date">{{.Day}}</span>
-        <span class="calendar__task">{{.NumRes}}</span>
-      </div>
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}} {{if eq .Day $today}} today {{end}}"
+      onclick="window.location='/merchant/{{$user.ID}}/show-reservations-per-day?month={{$currMonth}}&day={{.Day}}&year={{$currYear}}&tab={{$tab}}'">
+          <span class="calendar__date">{{.Day}}</span>
+          <span class="calendar__task">{{.NumRes}}</span>
+        </div>
+      </a>
       {{end}}
     </section>
 
     <section class="calendar__week">
       {{range $secondWeek}}
-      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}} {{if eq .Day $today}} today {{end}}"
+      onclick="window.location='/merchant/{{$user.ID}}/show-reservations-per-day?month={{$currMonth}}&day={{.Day}}&year={{$currYear}}&tab={{$tab}}'">
         <span class="calendar__date">{{.Day}}</span>
         <span class="calendar__task">{{.NumRes}}</span>
       </div>
@@ -163,7 +182,8 @@ Reservation Calender
 
     <section class="calendar__week">
       {{range $thirdWeek}}
-      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}} {{if eq .Day $today}} today {{end}}"
+      onclick="window.location='/merchant/{{$user.ID}}/show-reservations-per-day?month={{$currMonth}}&day={{.Day}}&year={{$currYear}}&tab={{$tab}}'">
         <span class="calendar__date">{{.Day}}</span>
         <span class="calendar__task">{{.NumRes}}</span>
       </div>
@@ -172,7 +192,8 @@ Reservation Calender
 
     <section class="calendar__week">
       {{range $fourthWeek}}
-      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}} {{if eq .Day $today}} today {{end}}"
+      onclick="window.location='/merchant/{{$user.ID}}/show-reservations-per-day?month={{$currMonth}}&day={{.Day}}&year={{$currYear}}&tab={{$tab}}'">
         <span class="calendar__date">{{.Day}}</span>
         <span class="calendar__task">{{.NumRes}}</span>
       </div>
@@ -183,10 +204,12 @@ Reservation Calender
 
     <section class="calendar__week">
       {{range $fifthWeek}}
-      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}} {{if eq .Day $today}} today {{end}}"
+      onclick="window.location='/merchant/{{$user.ID}}/show-reservations-per-day?month={{$currMonth}}&day={{.Day}}&year={{$currYear}}&tab={{$tab}}'">
         <span class="calendar__date">{{.Day}}</span>
         <span class="calendar__task">{{.NumRes}}</span>
       </div>
+      </a>
       {{end}}
       {{if eq $nextRow 0}}
       {{range $inactiveEnd}}
@@ -203,10 +226,12 @@ Reservation Calender
     {{$sixthweek := index .Data "sixth_active_days"}}
     <section class="calendar__week">
       {{range $sixthweek}}
-      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}}">
+      <div class="calendar__day {{if gt .NumRes 0}} booked {{end}} {{if eq .Day $today}} today {{end}}" 
+        onclick="window.location='/merchant/{{$user.ID}}/show-reservations-per-day?month={{$currMonth}}&day={{.Day}}&year={{$currYear}}&tab={{$tab}}'">
         <span class="calendar__date">{{.Day}}</span>
         <span class="calendar__task">{{.NumRes}}</span>
       </div>
+
       {{end}}
       {{range $inactiveEnd}}
       <div class="calendar__day inactive">

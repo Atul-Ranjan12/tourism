@@ -1,6 +1,11 @@
 package repository
 
-import "github.com/Atul-Ranjan12/tourism/internal/models"
+import (
+	"time"
+
+	"github.com/Atul-Ranjan12/tourism/internal/models"
+)
+
 
 type DatabaseRepo interface {
 	InsertNewUser(reg models.UserRegistration) error
@@ -65,7 +70,13 @@ type DatabaseRepo interface {
 	// Functions to get all the item reveiws:
 	GetItemReviews(catID int, itemID int) ([]models.ItemReview, error)
 
+	//Month wise retrieval of reservations
 	GetActivityReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
 	GetHotelReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
 	GetBusReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
+
+	//DayWise retrieval of Reservation Data
+	GetBusReservationByDay(day time.Time, mid int) ([]models.BusReservationData,error)
+	GetHotelReservationByDay(day time.Time, mid int) ([]models.HotelRoomReservation,error)
+	GetActivityReservationByDay(day time.Time, mid int) ([]models.ActivityReservation,error)
 }

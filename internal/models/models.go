@@ -193,11 +193,6 @@ type CatItemReview struct {
 	Review   []ItemReview
 }
 
-type ReservationCalendar struct {
-	Month        string
-	Reservations map[int]int
-}
-
 type CalenderDay struct {
 	Day    int
 	NumRes int
@@ -205,4 +200,9 @@ type CalenderDay struct {
 
 func (d *CalenderDay) UpdateNumRes(x int) {
 	d.NumRes = x
+}
+
+type ReservationCalendar struct{
+	Month string
+	Reservations map[int]int
 }

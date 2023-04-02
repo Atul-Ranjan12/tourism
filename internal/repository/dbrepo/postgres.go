@@ -1399,9 +1399,7 @@ func (m *PostgresDBRepo) GetActivityReservationByMonth(month int, mid int) (mode
 // function to get the number of Hotel reservations in each day of the month
 func (m *PostgresDBRepo) GetHotelReservationByMonth(month int, mid int) (models.ReservationCalendar, error) {
 	// Convert the month integer to a string with leading zeros
-	monthStr := fmt.Sprintf("%02d", month)
-
-	log.Println(monthStr)
+	
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -1461,10 +1459,8 @@ func (m *PostgresDBRepo) GetHotelReservationByMonth(month int, mid int) (models.
 
 // function to get the number of Bus reservations in each day of the month
 func (m *PostgresDBRepo) GetBusReservationByMonth(month int, mid int) (models.ReservationCalendar, error) {
-	// Convert the month integer to a string with leading zeros
-	monthStr := fmt.Sprintf("%02d", month)
+	
 
-	log.Println(monthStr)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -1521,3 +1517,144 @@ func (m *PostgresDBRepo) GetBusReservationByMonth(month int, mid int) (models.Re
 	return res, nil
 
 }
+
+
+
+
+//function to get the Details of of Bus reservations in each day of the month
+func (m *PostgresDBRepo) GetBusReservationByDay(date time.Time, mid int) ([]models.BusReservationData, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    var res []models.BusReservationData
+
+    // Query to get the reservations for the given month and reservation_id
+    query := `
+        SELECT bus_reservations.id
+		FROM bus_reservations
+		FULL OUTER JOIN bus ON bus_reservations.bus_id = bus.id
+	    WHERE bus_reservations.reservation_date::date = $2::DATE
+		AND bus.merchant_id = $1
+		GROUP BY bus_reservations.id,DATE_TRUNC('day', bus_reservations.reservation_date)
+		ORDER BY bus_reservations.reservation_date ASC
+    `
+
+    rows, err := m.DB.QueryContext(ctx, query, mid, date)
+    if err != nil {
+        log.Println("Cannot execute the select query: ", err)
+        return res, err
+    }
+    defer rows.Close()
+
+    // Loop through the rows of the result set and update the res
+    for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+        if err != nil {
+            log.Println("Error scanning row: ", err)
+            return res, err
+        }
+        busReservation, err := m.GetReservationByID(id)
+        if err != nil {
+            log.Println("Error getting reservation by ID: ", err)
+            return res, err
+        }
+		res = append(res, busReservation)
+        
+    }
+
+    return res, nil
+}
+
+//function to get the Details of of Hotel reservations in each day of the month
+func (m *PostgresDBRepo) GetHotelReservationByDay(date time.Time, mid int) ([]models.HotelRoomReservation, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    var res []models.HotelRoomReservation
+
+    // Query to get the reservations for the given month and reservation ID
+    query := `
+        SELECT hotel_reservations.id
+		FROM hotel_reservations
+		FULL OUTER JOIN hotel_room ON hotel_reservations.hotel_id = hotel_room.id
+	    WHERE hotel_reservations.reservation_date_start::date = $2::DATE
+		AND hotel_room.merchant_id = $1
+		GROUP BY hotel_reservations.id,DATE_TRUNC('day', hotel_reservations.reservation_date_start)
+		ORDER BY hotel_reservations.reservation_date_start ASC
+    `
+
+    rows, err := m.DB.QueryContext(ctx, query, mid, date)
+    if err != nil {
+        log.Println("Cannot execute the select query: ", err)
+        return res, err
+    }
+    defer rows.Close()
+
+    // Loop through the rows of the result set and update the reservation
+    for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+        if err != nil {
+            log.Println("Error scanning row: ", err)
+            return res, err
+        }
+        hotelReservation, err := m.GetHotelReseravtionByID(id)
+        if err != nil {
+            log.Println("Error getting reservation by ID: ", err)
+            return res, err
+        }
+		res = append(res, hotelReservation)
+        
+    }
+
+    return res, nil
+}
+
+
+//function to get the Details of of Activity reservations in each day of the month
+func (m *PostgresDBRepo) GetActivityReservationByDay(date time.Time, mid int) ([]models.ActivityReservation, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    var res []models.ActivityReservation
+
+    // Query to get the reservations for the given month and activity_reservation_id
+    query := `
+        SELECT activity_reservations.id
+		FROM activity_reservations
+		FULL OUTER JOIN activity ON activity_reservations.activity_id = activity.id
+	    WHERE activity_reservations.reservation_date::date = $2::DATE
+		AND activity.merchant_id = $1
+		GROUP BY activity_reservations.id,DATE_TRUNC('day', activity_reservations.reservation_date)
+		ORDER BY activity_reservations.reservation_date ASC
+    `
+
+    rows, err := m.DB.QueryContext(ctx, query, mid, date)
+    if err != nil {
+        log.Println("Cannot execute the select query: ", err)
+        return res, err
+    }
+    defer rows.Close()
+
+    // Loop through the rows of the result set and update the reservation
+    for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+        if err != nil {
+            log.Println("Error scanning row: ", err)
+            return res, err
+        }
+        activityReservation, err := m.GetActivityReseravtionByID(id)
+        if err != nil {
+            log.Println("Error getting reservation by ID: ", err)
+            return res, err
+        }
+		res = append(res, activityReservation)
+        
+    }
+
+    return res, nil
+}
+
+

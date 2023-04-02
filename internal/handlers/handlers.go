@@ -2061,6 +2061,135 @@ func (m *Repository) GetBusByMonth(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
 }
 
+
+// function to retrievee the bus Reservations of a day
+func (m *Repository) GetBusByDay(w http.ResponseWriter, r *http.Request) {
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+
+	// Get the MerchantID from the UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+	var busReservations []models.BusReservationData
+
+	/* You can fetch the date attribute from the request and pass it to the function */
+	date:=time.Now()
+	
+	busReservations, err = m.DB.GetBusReservationByDay(date, merchantID)
+	if err != nil {
+		log.Println(err)
+
+		return
+	}
+
+	//The reservations can be sent as the response here
+	for i:=0; i<len(busReservations);i++{
+		log.Println("Bus Reservation ",i," : ",busReservations[i].FirstName,"----",busReservations[i].Bus.BusName)
+	}
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
+}
+
+// function to retrievee the Hotel Reservations of a day
+func (m *Repository) GetHotelByDay(w http.ResponseWriter, r *http.Request) {
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+
+	// Get the MerchantID from the UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+	var hotelReservations []models.HotelRoomReservation
+
+	/* You can fetch the date attribute from the request and pass it to the function */
+	date:=time.Now()
+	
+	hotelReservations, err = m.DB.GetHotelReservationByDay(date, merchantID)
+	if err != nil {
+		log.Println(err)
+
+		return
+	}
+
+	//The reservations can be sent as the response here
+	for i:=0; i<len(hotelReservations);i++{
+		log.Println("Hotel Reservation ",i," : ",hotelReservations[i].FirstName,"----",hotelReservations[i].Room.HotelName)
+	}
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
+}
+
+
+// function to retrievee the Activity Reservations of a day
+func (m *Repository) GetActivityByDay(w http.ResponseWriter, r *http.Request) {
+	// Getting the current User from the session: for the main merchant layout
+	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
+	stringMap := make(map[string]string)
+	stringMap["user_name"] = currentUser.FirstName + " " + currentUser.LastName
+
+	// Passing the Current User Details to the template data:
+	data := make(map[string]interface{})
+	data["user_details"] = currentUser
+
+
+	// Get the MerchantID from the UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting merchant ID", err)
+		return
+	}
+	var activityReservations []models.ActivityReservation
+
+	/* You can fetch the date attribute from the request and pass it to the function */
+
+
+	//code to convert month, day, year to required format
+	// Convert the month integer to a string with leading zeros
+	month:=4
+	year:=2023
+	day:=2
+	now:=time.Now()
+	targetDate:= time.Date(year, time.Month(month), day, 0, 0, 0, 0, now.Location())
+
+	//
+
+	// date:=time.Now()
+	
+	activityReservations, err = m.DB.GetActivityReservationByDay(targetDate, merchantID)
+	if err != nil {
+		log.Println(err)
+
+		return
+	}
+
+
+	//The reservations can be sent as the response here
+	for i:=0; i<len(activityReservations);i++{
+		log.Println("Activity Reservation ",i," : ",activityReservations[i].FirstName,"----",activityReservations[i].Activity.ActivityName)
+	}
+	http.Redirect(w, r, fmt.Sprintf("/merchant/%d/dashboard", merchantID), http.StatusSeeOther)
+}
+
+
+
+
 /* ----------------------------------------------test-end-----------------------------------------------*/
 
 // Function to show the reviews page

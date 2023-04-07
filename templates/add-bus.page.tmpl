@@ -7,7 +7,7 @@
   <h4>Please fill up this form to add a bus to your Portfolio</h4>
 </div>
 <div class="col-md-12 mt-3">
-  <form action="/merchant/{{ $user.ID }}/add-bus" method="post" novalidate>
+  <form action="/merchant/{{ $user.ID }}/add-bus" method="post" enctype="multipart/form-data" novalidate>
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
     <div class="form-row mt-3">
       <div class="form-group col-md-6">
@@ -141,6 +141,23 @@
         />
       </div>
     </div>
+
+    <div class="form-group mt-3">
+      <strong
+            ><label for="image"
+              >Please upload an image of your Bus (Please make sure it is less than 1 MB):</label
+            ></strong
+          >
+          <input
+            type="file"
+            name="image"
+            id="image"
+            class="form-control-file form-control-lg"
+            accept=".jpg"
+          />
+        </div>
+    </div>
+
     <div class="form-group mt-3">
       <div class="form-check">
         <input class="form-check-input" type="checkbox" id="agreed" name="agreed" value="agreed"/>
@@ -150,6 +167,7 @@
           {{ end }}
       </div>
     </div>
+    
     <div class="form-group mt-5">
         <input type="submit" class="btn btn-success btn-block btn-lg"></input>
     </div>

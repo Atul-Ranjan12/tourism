@@ -16,6 +16,11 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Use(middleware.Recoverer)
 	mux.Use(NoSurf)
 	mux.Use(SessionLoad)
+	// ---------------------User Side Routes -----------------------
+
+	mux.Get("/", handlers.Repo.ShowHome)
+
+	// ---------------------Admin Side Routes -----------------------
 
 	// Login Page Routes
 	mux.Get("/login", handlers.Repo.ShowLogin)

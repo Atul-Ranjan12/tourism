@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
@@ -23,6 +24,12 @@ var functions = template.FuncMap{
 	"formatDate": FormatDate,
 	"iterate":    Iterate,
 	"add":        Add,
+	"base64":     Encode,
+}
+
+// Fucntion to parse the base64 image in the template
+func Encode(data []byte) string {
+	return base64.StdEncoding.EncodeToString(data)
 }
 
 // Function for templates to add values

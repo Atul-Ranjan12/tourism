@@ -8,7 +8,7 @@
     <h4>Please fill up this form to add a Hotel Room to your Portfolio:</h4>
 </div>
 <div class="col-md-12 mt-3">
-  <form action="/merchant/{{ $user.ID }}/add-hotel" method="post" novalidate>
+  <form action="/merchant/{{ $user.ID }}/add-hotel" enctype="multipart/form-data" method="post" novalidate>
 
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
 
@@ -161,6 +161,21 @@
         placeholder="Short Hotel Room Description:"
         value="{{$hotel.HotelRoomDescription}}"
       />
+    </div>
+
+    <div class="form-group mt-3">
+      <strong
+            ><label for="image"
+              >Please upload an image of your Hotel Room (Please make sure it is less than 1 MB):</label
+            ></strong
+          >
+          <input
+            type="file"
+            name="image"
+            id="image"
+            class="form-control-file form-control-lg"
+          />
+        </div>
     </div>
 
 

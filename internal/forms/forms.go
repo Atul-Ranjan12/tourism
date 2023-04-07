@@ -128,8 +128,8 @@ func (f *Form) AddVerificationError() {
 }
 
 // Function to check if the image file is less than 200 kb
-func IsValidFileSize(handler *multipart.FileHeader) bool {
-	return handler.Size <= 300*1024
+func IsValidFileSize(handler *multipart.FileHeader, x int64) bool {
+	return handler.Size <= x*1024
 }
 
 // Funciton to validate if the field is an integer, if yes return the value

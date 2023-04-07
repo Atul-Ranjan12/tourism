@@ -461,7 +461,7 @@ func (m *Repository) PostShowDocumentsVerification(w http.ResponseWriter, r *htt
 	}
 	defer file.Close()
 
-	if !forms.IsValidFileSize(handler) {
+	if !forms.IsValidFileSize(handler, 300) {
 		m.App.Session.Put(r.Context(), "error", "File Size should not be greater than 300 KB")
 		render.Template(w, r, "merchant-verification-documents.page.tmpl", &models.TemplateData{
 			Data: data,
@@ -656,8 +656,38 @@ func (m *Repository) PostAdminAddBus(w http.ResponseWriter, r *http.Request) {
 	// make stringmap
 	stringMap := make(map[string]string)
 
+	// Handle multipart form data (image)
+	r.ParseMultipartForm(32 << 20)
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		log.Println("Error getting the file", err)
+		m.App.Session.Put(r.Context(), "error", "No file was uploaded")
+		render.Template(w, r, "merchant-verification-documents.page.tmpl", &models.TemplateData{
+			Data: data,
+			Form: forms.New(nil),
+		})
+		return
+	}
+	defer file.Close()
+
+	if !forms.IsValidFileSize(handler, 2000) {
+		m.App.Session.Put(r.Context(), "error", "File Size should not be greater than 2000 KB")
+		render.Template(w, r, "merchant-verification-documents.page.tmpl", &models.TemplateData{
+			Data: data,
+			Form: forms.New(nil),
+		})
+		return
+	}
+
+	// The final Image to be uploaded to the database
+	imageData, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Println("Error loading the image file into bytes")
+		return
+	}
+
 	// Form Validattion:
-	err := r.ParseForm()
+	err = r.ParseForm()
 	if err != nil {
 		log.Println("ERROR: An unexpected Error occured while parsing the form")
 	}
@@ -687,6 +717,7 @@ func (m *Repository) PostAdminAddBus(w http.ResponseWriter, r *http.Request) {
 		BusNumPlate: r.Form.Get("bus_no_plate"),
 		BusPAN:      r.Form.Get("bus_pan"),
 		Price:       price,
+		Image:       imageData,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -1126,8 +1157,38 @@ func (m *Repository) PostAdminAddRecreationalActivity(w http.ResponseWriter, r *
 	// make stringmap
 	stringMap := make(map[string]string)
 
+	// Handle multipart form data (image)
+	r.ParseMultipartForm(32 << 20)
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		log.Println("Error getting the file", err)
+		m.App.Session.Put(r.Context(), "error", "No file was uploaded")
+		render.Template(w, r, "merchant-verification-documents.page.tmpl", &models.TemplateData{
+			Data: data,
+			Form: forms.New(nil),
+		})
+		return
+	}
+	defer file.Close()
+
+	if !forms.IsValidFileSize(handler, 2000) {
+		m.App.Session.Put(r.Context(), "error", "File Size should not be greater than 2000 KB")
+		render.Template(w, r, "merchant-verification-documents.page.tmpl", &models.TemplateData{
+			Data: data,
+			Form: forms.New(nil),
+		})
+		return
+	}
+
+	// The final Image to be uploaded to the database
+	imageData, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Println("Error loading the image file into bytes")
+		return
+	}
+
 	// Form Validattion:
-	err := r.ParseForm()
+	err = r.ParseForm()
 	if err != nil {
 		log.Println("ERROR: An unexpected Error occured while parsing the form")
 	}
@@ -1161,6 +1222,7 @@ func (m *Repository) PostAdminAddRecreationalActivity(w http.ResponseWriter, r *
 		Location:            r.Form.Get("location"),
 		CreatedAt:           time.Now(),
 		UpdatedAt:           time.Now(),
+		Image:               imageData,
 	}
 
 	form.Required("activity_name", "activity_description", "location", "activity_price", "activity_duration", "min_age", "phone_num", "email", "max_size")
@@ -1656,8 +1718,39 @@ func (m *Repository) PostAdminAddHotel(w http.ResponseWriter, r *http.Request) {
 	// make stringmap
 	stringMap := make(map[string]string)
 
+	// Handle the image data
+	// Handle multipart form data (image)
+	r.ParseMultipartForm(32 << 20)
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		log.Println("Error getting the file", err)
+		m.App.Session.Put(r.Context(), "error", "No file was uploaded")
+		render.Template(w, r, "merchant-verification-documents.page.tmpl", &models.TemplateData{
+			Data: data,
+			Form: forms.New(nil),
+		})
+		return
+	}
+	defer file.Close()
+
+	if !forms.IsValidFileSize(handler, 2000) {
+		m.App.Session.Put(r.Context(), "error", "File Size should not be greater than 2000 KB")
+		render.Template(w, r, "merchant-verification-documents.page.tmpl", &models.TemplateData{
+			Data: data,
+			Form: forms.New(nil),
+		})
+		return
+	}
+
+	// The final Image to be uploaded to the database
+	imageData, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Println("Error loading the image file into bytes")
+		return
+	}
+
 	// Server side Form Validation
-	err := r.ParseForm()
+	err = r.ParseForm()
 	if err != nil {
 		log.Println("ERROR: An unexpected Error occured while parsing the form")
 	}
@@ -1690,6 +1783,7 @@ func (m *Repository) PostAdminAddHotel(w http.ResponseWriter, r *http.Request) {
 		Price:                price,
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
+		Image:                imageData,
 	}
 
 	// User side form validation

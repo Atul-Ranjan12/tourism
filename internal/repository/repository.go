@@ -6,7 +6,6 @@ import (
 	"github.com/Atul-Ranjan12/tourism/internal/models"
 )
 
-
 type DatabaseRepo interface {
 	InsertNewUser(reg models.UserRegistration) error
 	CheckTable() error
@@ -71,12 +70,22 @@ type DatabaseRepo interface {
 	GetItemReviews(catID int, itemID int) ([]models.ItemReview, error)
 
 	//Month wise retrieval of reservations
-	GetActivityReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
-	GetHotelReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
-	GetBusReservationByMonth(month int, mid int)(models.ReservationCalendar, error)
+	GetActivityReservationByMonth(month int, mid int) (models.ReservationCalendar, error)
+	GetHotelReservationByMonth(month int, mid int) (models.ReservationCalendar, error)
+	GetBusReservationByMonth(month int, mid int) (models.ReservationCalendar, error)
 
 	//DayWise retrieval of Reservation Data
-	GetBusReservationByDay(day time.Time, mid int) ([]models.BusReservationData,error)
-	GetHotelReservationByDay(day time.Time, mid int) ([]models.HotelRoomReservation,error)
-	GetActivityReservationByDay(day time.Time, mid int) ([]models.ActivityReservation,error)
+	GetBusReservationByDay(day time.Time, mid int) ([]models.BusReservationData, error)
+	GetHotelReservationByDay(day time.Time, mid int) ([]models.HotelRoomReservation, error)
+	GetActivityReservationByDay(day time.Time, mid int) ([]models.ActivityReservation, error)
+
+	// Get All Assets in the system
+	GetAllHotelRoomsInSystem() ([]models.HotelRoom, error)
+	GetAllBusInSystem() ([]models.AddBusData, error)
+	GetAllActivityInSystem() ([]models.AddActivityData, error)
+
+	// Funcitons for the front en
+	GetTopHotels(topn int) ([]models.HotelRoom, error)
+	GetTopBus(topn int) ([]models.AddBusData, error)
+	GetTopActivity(topn int) ([]models.AddActivityData, error)
 }

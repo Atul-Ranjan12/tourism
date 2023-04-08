@@ -16,6 +16,11 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Use(middleware.Recoverer)
 	mux.Use(NoSurf)
 	mux.Use(SessionLoad)
+	// ---------------------User Side Routes -----------------------
+
+	mux.Get("/", handlers.Repo.ShowHome)
+
+	// ---------------------Admin Side Routes -----------------------
 
 	// Login Page Routes
 	mux.Get("/login", handlers.Repo.ShowLogin)
@@ -153,17 +158,18 @@ func routes(app *config.AppConfig) http.Handler {
 		// 3. merchant delete recreational activity
 		mux.Get("/{src}/add-activity/delete/{id}", handlers.Repo.PostAdminDeleteActivity)
 
+		// Show the Reservation per day
+		mux.Get("/{src}/show-reservations-per-day", handlers.Repo.ShowReservationsPerDay)
 
 		//test for count of reservation
-		mux.Get("/{src}/getActivityReservations",handlers.Repo.GetActivityByMonth)
-		mux.Get("/{src}/getHotelReservations",handlers.Repo.GetHotelByMonth)
-		mux.Get("/{src}/getBusReservations",handlers.Repo.GetBusByMonth)
-
+		mux.Get("/{src}/getActivityReservations", handlers.Repo.GetActivityByMonth)
+		mux.Get("/{src}/getHotelReservations", handlers.Repo.GetHotelByMonth)
+		mux.Get("/{src}/getBusReservations", handlers.Repo.GetBusByMonth)
 
 		// test for getting the day wise details
-		mux.Get("/{src}/getBusDetailsByDate",handlers.Repo.GetBusByDay)
-		mux.Get("/{src}/getHotelDetailsByDate",handlers.Repo.GetHotelByDay)
-		mux.Get("/{src}/getActivityDetailsByDate",handlers.Repo.GetActivityByDay)
+		mux.Get("/{src}/getBusDetailsByDate", handlers.Repo.GetBusByDay)
+		mux.Get("/{src}/getHotelDetailsByDate", handlers.Repo.GetHotelByDay)
+		mux.Get("/{src}/getActivityDetailsByDate", handlers.Repo.GetActivityByDay)
 
 	})
 

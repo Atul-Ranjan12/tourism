@@ -73,6 +73,7 @@ type AddBusData struct {
 	BusNumPlate string
 	BusPAN      string
 	Price       int
+	Image       []byte
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -92,6 +93,7 @@ type AddActivityData struct {
 	Location            string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
+	Image               []byte
 }
 
 // Bus Reservation Model
@@ -127,6 +129,7 @@ type HotelRoom struct {
 	Price                int
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
+	Image                []byte
 }
 
 // Editable Startdate, enddate, numPeople, phone, email
@@ -202,8 +205,8 @@ func (d *CalenderDay) UpdateNumRes(x int) {
 	d.NumRes = x
 }
 
-type ReservationCalendar struct{
-	Month string
+type ReservationCalendar struct {
+	Month        string
 	Reservations map[int]int
 }
 

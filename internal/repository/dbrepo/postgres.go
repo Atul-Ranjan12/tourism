@@ -300,8 +300,8 @@ func (m *PostgresDBRepo) AddActivityToDatabase(activity models.AddActivityData) 
 
 	query := `
 		INSERT INTO activity (activity_name, activity_description, activity_price, activity_duration, max_size, min_age, phone_num, email, location,
-						merchant_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12)
+						merchant_id, created_at, updated_at, image)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,$12, $13)
 	`
 	_, err := m.DB.QueryContext(ctx, query,
 		activity.ActivityName,
@@ -316,6 +316,7 @@ func (m *PostgresDBRepo) AddActivityToDatabase(activity models.AddActivityData) 
 		activity.MerchantID,
 		activity.CreatedAt,
 		activity.UpdatedAt,
+		activity.Image,
 	)
 	if err != nil {
 		log.Println("Error executing query: ", err)
@@ -382,7 +383,7 @@ func (m *PostgresDBRepo) GetActivityByID(activityID int) (models.AddActivityData
 
 	query := `
 		SELECT id, activity_name, activity_description, activity_price, activity_duration, max_size, min_age, phone_num, email, location,
-						merchant_id, created_at, updated_at
+						merchant_id, created_at, updated_at, image
 		FROM activity
 		WHERE id = $1
 	`
@@ -403,6 +404,7 @@ func (m *PostgresDBRepo) GetActivityByID(activityID int) (models.AddActivityData
 		&i.MerchantID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Image,
 	)
 	if err != nil {
 		return i, err
@@ -464,9 +466,9 @@ func (m *PostgresDBRepo) AddBusToDatabase(bus models.AddBusData) error {
 
 	query := `
 		INSERT INTO bus (bus_name, bus_source, bus_destination, bus_model, bus_no_plate, num_seats, office_pan, office_address, price,
-						merchant_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-	`
+						merchant_id, created_at, updated_at, image)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+`
 	_, err := m.DB.QueryContext(ctx, query,
 		bus.BusName,
 		bus.BusStart,
@@ -480,6 +482,7 @@ func (m *PostgresDBRepo) AddBusToDatabase(bus models.AddBusData) error {
 		bus.MerchantID,
 		bus.CreatedAt,
 		bus.UpdatedAt,
+		bus.Image,
 	)
 	if err != nil {
 		log.Println("Error executing query: ", err)
@@ -543,7 +546,7 @@ func (m *PostgresDBRepo) GetBusByID(busID int) (models.AddBusData, error) {
 
 	query := `
 		SELECT id, bus_name, bus_source, bus_destination, bus_model, bus_no_plate, num_seats, office_pan, office_address, 
-			   merchant_id, created_at, updated_at, price
+			   merchant_id, created_at, updated_at, price, image
 		FROM bus
 		WHERE id = $1
 	`
@@ -564,6 +567,7 @@ func (m *PostgresDBRepo) GetBusByID(busID int) (models.AddBusData, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Price,
+		&i.Image,
 	)
 	if err != nil {
 		return i, err
@@ -804,8 +808,8 @@ func (m *PostgresDBRepo) AddNewHotelRoom(hotel models.HotelRoom) error {
 	defer cancel()
 
 	query := `
-	INSERT INTO hotel_room (hotel_name, hotel_room_name, hotel_type, hotel_address, hotel_pan, hotel_num_room, hotel_phone_1, hotel_phone_2, merchant_id, hotel_description, price, created_at, updated_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+	INSERT INTO hotel_room (hotel_name, hotel_room_name, hotel_type, hotel_address, hotel_pan, hotel_num_room, hotel_phone_1, hotel_phone_2, merchant_id, hotel_description, price, created_at, updated_at, image)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
 
 	_, err := m.DB.ExecContext(ctx, query,
@@ -822,6 +826,7 @@ func (m *PostgresDBRepo) AddNewHotelRoom(hotel models.HotelRoom) error {
 		hotel.Price,
 		hotel.CreatedAt,
 		hotel.UpdatedAt,
+		hotel.Image,
 	)
 	if err != nil {
 		return err
@@ -884,7 +889,10 @@ func (m *PostgresDBRepo) GetRoomByID(id int) (models.HotelRoom, error) {
 	defer cancel()
 
 	query := `
-	SELECT id, hotel_name, hotel_room_name, hotel_type, hotel_address, hotel_pan, hotel_num_room, hotel_phone_1, hotel_phone_2, merchant_id, hotel_description, created_at, updated_at, price
+	SELECT id, hotel_name, hotel_room_name, hotel_type, 
+	hotel_address, hotel_pan, hotel_num_room, hotel_phone_1, 
+	hotel_phone_2, merchant_id, hotel_description, 
+	created_at, updated_at, price, image
 	FROM hotel_room 
 	WHERE id = $1 
 	`
@@ -906,6 +914,7 @@ func (m *PostgresDBRepo) GetRoomByID(id int) (models.HotelRoom, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Price,
+		&i.Image,
 	)
 	if err != nil {
 		return i, err

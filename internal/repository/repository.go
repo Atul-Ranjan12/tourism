@@ -79,4 +79,16 @@ type DatabaseRepo interface {
 	GetBusReservationByDay(day time.Time, mid int) ([]models.BusReservationData,error)
 	GetHotelReservationByDay(day time.Time, mid int) ([]models.HotelRoomReservation,error)
 	GetActivityReservationByDay(day time.Time, mid int) ([]models.ActivityReservation,error)
+
+
+	//dashboard functions for reservation count
+	GetTotalReservationCountHotel(mid int) (int, error)
+	GetProcessedReservationCountHotel(mid int)(int, error)
+
+	GetTotalReservationCountBus(mid int) (int, error)
+	GetProcessedReservationCountBus(mid int)(int, error)
+
+	GetTotalReservationCountActivity(mid int) (int, error)
+	GetProcessedReservationCountActivity(mid int)(int, error)
 }
+

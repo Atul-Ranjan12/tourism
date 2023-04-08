@@ -7,12 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin</title>
 
+    {{block "css" .}}
     <link
       rel="stylesheet"
       type="text/css"
       href="https://unpkg.com/notie/dist/notie.min.css"
     />
-    {{block "css" .}}
     <link rel="stylesheet" href="/static/merchant/style.css" />
     <link
       rel="stylesheet"
@@ -20,11 +20,6 @@
       integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
       crossorigin="anonymous"
     />
-
-    {{
-      end
-    }}
-
     <link
       rel="stylesheet"
       href="https://unicons.iconscout.com/release/v4.0.0/css/line.css"
@@ -47,6 +42,10 @@
         transition: var(--tran-05);
       }
     </style>
+
+    {{
+      end
+    }}
   </head>
   <body>
     {{$user := index .Data "user_details"}}
@@ -91,7 +90,11 @@
             </a>
           </li>
           <li>
-            <a href="/merchant/{{ $user.ID }}/merchant-show-reservations-processed">
+            <a
+              href="/merchant/{{
+                $user.ID
+              }}/merchant-show-reservations-processed"
+            >
               <i class="uil uil-check"></i>
               <span class="link-name">Processed Reservations</span>
             </a>
@@ -140,11 +143,11 @@
         <div class="title">
           <span class="userName">Hello {{index .StringMap "user_name"}}</span>
         </div>
+
+        {{block "content" .}}
+
+        {{ end }}
       </div>
-
-      {{block "content" .}}
-
-      {{ end }}
     </section>
 
     {{else}}

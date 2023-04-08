@@ -1,6 +1,10 @@
 package models
 
-import "github.com/Atul-Ranjan12/tourism/internal/forms"
+import (
+	"text/template"
+
+	"github.com/Atul-Ranjan12/tourism/internal/forms"
+)
 
 type TemplateData struct {
 	StringMap       map[string]string
@@ -13,4 +17,5 @@ type TemplateData struct {
 	Error           string
 	Form            *forms.Form
 	IsAuthenticated int
+	TemplateFuncs   template.FuncMap
 }

@@ -206,3 +206,12 @@ type ReservationCalendar struct{
 	Month string
 	Reservations map[int]int
 }
+
+type ReservationsCount struct{
+	TotalHotelRes int
+	ProcessedHotelRes float64
+	TotalBusRes int
+	ProcessedBusRes float64
+	TotalActivityRes int
+	ProcessedActivityRes float64
+}

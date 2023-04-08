@@ -17,12 +17,26 @@ import (
 
 // Setup path to templates
 var pathToTemplates string = "./templates"
+func seq(n int) []int {
+	seq := make([]int, n)
+	for i := range seq {
+		seq[i] = i
+	}
+	return seq
+}
+
+func sub(a, b int) int {
+	return a - b
+}
 
 var functions = template.FuncMap{
 	"humanDate":  HumanDate,
 	"formatDate": FormatDate,
 	"iterate":    Iterate,
 	"add":        Add,
+	"seq": seq,
+	"sub":sub,
+
 }
 
 // Function for templates to add values

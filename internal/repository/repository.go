@@ -75,9 +75,20 @@ type DatabaseRepo interface {
 	GetBusReservationByMonth(month int, mid int) (models.ReservationCalendar, error)
 
 	//DayWise retrieval of Reservation Data
-	GetBusReservationByDay(day time.Time, mid int) ([]models.BusReservationData, error)
-	GetHotelReservationByDay(day time.Time, mid int) ([]models.HotelRoomReservation, error)
-	GetActivityReservationByDay(day time.Time, mid int) ([]models.ActivityReservation, error)
+	GetBusReservationByDay(day time.Time, mid int) ([]models.BusReservationData,error)
+	GetHotelReservationByDay(day time.Time, mid int) ([]models.HotelRoomReservation,error)
+	GetActivityReservationByDay(day time.Time, mid int) ([]models.ActivityReservation,error)
+
+
+	//dashboard functions for reservation count
+	GetTotalReservationCountHotel(mid int) (int, error)
+	GetProcessedReservationCountHotel(mid int)(int, error)
+
+	GetTotalReservationCountBus(mid int) (int, error)
+	GetProcessedReservationCountBus(mid int)(int, error)
+
+	GetTotalReservationCountActivity(mid int) (int, error)
+	GetProcessedReservationCountActivity(mid int)(int, error)
 
 	// Get All Assets in the system
 	GetAllHotelRoomsInSystem() ([]models.HotelRoom, error)
@@ -89,3 +100,4 @@ type DatabaseRepo interface {
 	GetTopBus(topn int) ([]models.AddBusData, error)
 	GetTopActivity(topn int) ([]models.AddActivityData, error)
 }
+

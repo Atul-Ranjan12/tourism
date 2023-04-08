@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"math"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"html/template"
 
 	"github.com/Atul-Ranjan12/tourism/internal/config"
 	"github.com/Atul-Ranjan12/tourism/internal/driver"
@@ -27,6 +29,26 @@ type Repository struct {
 }
 
 var Repo *Repository
+func round(num float64) int {
+    return int(num + math.Copysign(0.5, num))
+}
+
+func seq(n int) []int {
+	seq := make([]int, n)
+	for i := range seq {
+		seq[i] = i
+	}
+	return seq
+}
+
+func sub(a, b int) int {
+	return a - b
+}
+
+func toFixed(num float64, precision int) float64 {
+    output := math.Pow(10, float64(precision))
+    return float64(round(num * output)) / output
+}
 
 // NewRepo creates a new repository
 func NewRepo(a *config.AppConfig, db *driver.DB) *Repository {
@@ -236,6 +258,7 @@ func (m *Repository) PostSignUp(w http.ResponseWriter, r *http.Request) {
 
 // Function to show the administrative things
 func (m *Repository) ShowAdminDashboard(w http.ResponseWriter, r *http.Request) {
+	log.Println("hello reached the dashboard")
 	// Getting the current User from the session: for the main merchant layout
 	currentUser := m.App.Session.Get(r.Context(), "user_details").(models.User)
 	stringMap := make(map[string]string)
@@ -245,9 +268,194 @@ func (m *Repository) ShowAdminDashboard(w http.ResponseWriter, r *http.Request) 
 	data := make(map[string]interface{})
 	data["user_details"] = currentUser
 
+	// Get MerchantID from UserID
+	merchantID, err := m.DB.GetMerchantIDFromUserID(currentUser.ID)
+	if err != nil {
+		log.Println("Error getting user id from merchantID", err)
+		return
+	}
+
+	// Get all the reservations from the database for the hotel
+	TotalHotelRes, err := m.DB.GetTotalReservationCountHotel(merchantID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	ProcessedHotelRes, err := m.DB.GetProcessedReservationCountHotel(merchantID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// 1. Reservations
+
+	var res models.ReservationsCount
+	res.TotalHotelRes=TotalHotelRes
+	if TotalHotelRes>0 { 
+		res.ProcessedHotelRes=toFixed(float64(ProcessedHotelRes)/float64(TotalHotelRes)*100,2)
+	}else{
+		res.ProcessedHotelRes=0
+	}
+	
+
+	// Get all the reservations from the database for the bus
+	TotalBusRes, err := m.DB.GetTotalReservationCountBus(merchantID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	ProcessedBusRes, err := m.DB.GetProcessedReservationCountBus(merchantID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	res.TotalBusRes=TotalBusRes
+	if TotalBusRes>0{
+		res.ProcessedBusRes=toFixed(float64(ProcessedBusRes)/float64(TotalBusRes)*100,2)
+	}else{
+		res.ProcessedBusRes=0
+	}
+
+	// Get all the reservations from the database for the activity
+	TotalActivityRes, err := m.DB.GetTotalReservationCountActivity(merchantID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	ProcessedActivityRes, err := m.DB.GetProcessedReservationCountActivity(merchantID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	res.TotalActivityRes=TotalActivityRes
+	if TotalActivityRes>0{
+		res.ProcessedActivityRes=toFixed(float64(ProcessedActivityRes)/float64(TotalActivityRes)*100,2)
+	}else{
+		res.ProcessedActivityRes=0
+	}
+	data["res"]=res
+
+
+	// 2. Brief Review Section 
+	// 1. Get All the Bus of the merchant
+	var busReview []models.CatItemReview
+	buses, err := m.DB.GetAllBus(merchantID)
+	if err != nil {
+		log.Println("Error retrieving all the buses")
+	}
+	// a) Populate the Bus Reviews
+	for _, bus := range buses {
+		var i models.CatItemReview
+		i.ItemName = bus.BusName
+		// Get item reviews of all the buses (category 3)
+		itemReview, err := m.DB.GetItemReviews(3, bus.BusID)
+		if err != nil {
+			log.Println("Error getting Bus Reviews: ", err)
+			return
+		}
+
+		i.Review = itemReview
+		busReview = append(busReview, i)
+	}
+
+	// 2. Get All the Hotel Reservatins of the merchant
+	rooms, err := m.DB.GetAllHotelRooms(merchantID)
+	if err != nil {
+		log.Println("Error getting all the room data", err)
+	}
+
+	// a) Populate the Hotel Reviews
+	var hotelReview []models.CatItemReview
+	for _, room := range rooms {
+		var i models.CatItemReview
+		i.ItemName = room.HotelName
+
+		itemReview, err := m.DB.GetItemReviews(4, room.HotelID)
+		if err != nil {
+			log.Println("Error getting Hotel Room Reviews: ", err)
+			return
+		}
+
+		i.Review = itemReview
+		hotelReview = append(hotelReview, i)
+	}
+
+	// 3. Get All the recreational Activities of the merchant
+	activities, err := m.DB.GetAllActivity(merchantID)
+	if err != nil {
+		log.Println("Error getting al the activities", err)
+	}
+
+	// a) Populate the activity review
+	var activityReview []models.CatItemReview
+	for _, activity := range activities {
+		var i models.CatItemReview
+		i.ItemName = activity.ActivityName
+
+		itemReview, err := m.DB.GetItemReviews(5, activity.ActivityID)
+		if err != nil {
+			log.Println("Error getting Hotel Room Reviews: ", err)
+			return
+		}
+
+		i.Review = itemReview
+		activityReview = append(activityReview, i)
+	}
+	var allbusreviews []models.ItemReview
+
+	for _, catReview := range busReview {
+		for _, review := range catReview.Review {
+			allbusreviews = append(allbusreviews, review)
+		}
+	}
+
+	var allhotelreviews []models.ItemReview
+
+	for _, catReview := range hotelReview {
+		for _, review := range catReview.Review {
+			allhotelreviews = append(allhotelreviews, review)
+		}
+	}
+
+	var allactivityreviews []models.ItemReview
+
+	for _, catReview := range activityReview {
+		for _, review := range catReview.Review {
+			allactivityreviews = append(allactivityreviews, review)
+		}
+	}
+
+
+
+	if(len(allbusreviews)>2){
+		allbusreviews=allbusreviews[0:2]
+	}
+	if(len(allhotelreviews)>2){
+		allhotelreviews=allhotelreviews[0:2]
+	}
+	if(len(allactivityreviews)>2){
+		allactivityreviews=allactivityreviews[0:2]
+	}
+
+
+
+	// Putting the values as data keys to pass it to the template
+	allbusreviews=append(allbusreviews, allhotelreviews...)
+	allbusreviews=append(allbusreviews, allactivityreviews...)
+
+	data["reviews"] = allbusreviews
+	data["reviewLen"]=int(len(allbusreviews))
+
+	// Define the template functions to pass to the template
+	templateFunctions := template.FuncMap{
+		"seq": seq,
+		"sub": sub,
+	}
+	log.Println(len(allbusreviews),"helloooo",allbusreviews)
 	render.Template(w, r, "merchant-dashboard.page.tmpl", &models.TemplateData{
 		StringMap: stringMap,
 		Data:      data,
+		TemplateFuncs: templateFunctions,
 	})
 }
 
@@ -1944,6 +2152,8 @@ func (m *Repository) ShowMakeHotelReservation(w http.ResponseWriter, r *http.Req
 	render.Template(w, r, "make-hotel-reservation.page.tmpl", &models.TemplateData{})
 }
 
+
+
 // Function to post the reservation to the database
 func (m *Repository) PostShowMakeHotelReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -2422,6 +2632,7 @@ func (m *Repository) ShowReviewsPage(w http.ResponseWriter, r *http.Request) {
 		Data:      data,
 	})
 }
+
 
 // Funciton to show Reservations per daty
 func (m *Repository) ShowReservationsPerDay(w http.ResponseWriter, r *http.Request) {

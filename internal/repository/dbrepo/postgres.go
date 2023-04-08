@@ -1310,7 +1310,6 @@ func (m *PostgresDBRepo) GetItemReviews(catID int, itemID int) ([]models.ItemRev
 		FROM reviews 
 		WHERE review_cat = $1 AND review_item = $2
 	`
-
 	rows, err := m.DB.QueryContext(ctx, query, catID, itemID)
 	if err != nil {
 		log.Println("Could not execute query")
@@ -1340,6 +1339,8 @@ func (m *PostgresDBRepo) GetItemReviews(catID int, itemID int) ([]models.ItemRev
 	}
 	return itemReview, nil
 }
+
+
 
 //function to get the number of Activity reservations in each day of the month
 
@@ -1655,5 +1656,140 @@ func (m *PostgresDBRepo) GetActivityReservationByDay(date time.Time, mid int) ([
 
 	}
 
+	return res, nil
+}
+
+// fucntion to get total reservation count for hotels
+
+func (m *PostgresDBRepo) GetTotalReservationCountHotel(mid int) (int,error){
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var res int
+	// Query to get the reservations count 
+	query := `
+        SELECT COUNT(hr.id)
+		FROM hotel_reservations hr
+		LEFT JOIN hotel_room h ON (hr.hotel_id = h.id)
+		WHERE merchant_id=$1
+    `
+
+	row := m.DB.QueryRowContext(ctx, query,mid)
+	err := row.Scan(&res)
+	if err != nil {
+		log.Println("ERROR: Error executing query to check if the user exists")
+		return 0, err
+	}
+	return res, nil
+}
+
+// fucntion to get processed reservation count for hotels
+
+func (m *PostgresDBRepo) GetProcessedReservationCountHotel(mid int) (int,error){
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var res int
+	// Query to get the reservations count 
+	query := `
+        SELECT COUNT(hr.id) 
+		FROM hotel_reservations hr
+		LEFT JOIN hotel_room h ON (hr.hotel_id = h.id)
+		WHERE processed =1 AND merchant_id=$1
+    `
+	row := m.DB.QueryRowContext(ctx, query,mid)
+	err := row.Scan(&res)
+	if err != nil {
+		log.Println("ERROR: Error executing query to check if the user exists")
+		return 0, err
+	}
+	return res, nil
+}
+
+// fucntion to get total reservation count for bus
+
+func (m *PostgresDBRepo) GetTotalReservationCountBus(mid int) (int,error){
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var res int
+	// Query to get the reservations count 
+	query := `
+        SELECT COUNT(br.id)
+		FROM bus_reservations br
+		LEFT JOIN bus b ON (br.bus_id = b.id)
+		WHERE merchant_id=$1
+    `
+
+	row := m.DB.QueryRowContext(ctx, query,mid)
+	err := row.Scan(&res)
+	if err != nil {
+		log.Println("ERROR: Error executing query to check if the user exists")
+		return 0, err
+	}
+	return res, nil
+}
+
+// fucntion to get processed reservation count for bus
+
+func (m *PostgresDBRepo) GetProcessedReservationCountBus(mid int) (int,error){
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var res int
+	// Query to get the reservations count 
+	query := `
+        SELECT COUNT(br.id)
+		FROM bus_reservations br
+		LEFT JOIN bus b ON (br.bus_id = b.id)
+		WHERE processed =1 AND merchant_id=$1
+    `
+	row := m.DB.QueryRowContext(ctx, query,mid)
+	err := row.Scan(&res)
+	if err != nil {
+		log.Println("ERROR: Error executing query to check if the user exists")
+		return 0, err
+	}
+	return res, nil
+}
+
+// fucntion to get total reservation count for activity
+
+func (m *PostgresDBRepo) GetTotalReservationCountActivity(mid int) (int,error){
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var res int
+	// Query to get the reservations count 
+	query := `
+        SELECT COUNT(ar.id) 
+		FROM activity_reservations ar
+		LEFT JOIN activity a ON (ar.activity_id = a.id)
+		WHERE merchant_id=$1
+    `
+
+	row := m.DB.QueryRowContext(ctx, query,mid)
+	err := row.Scan(&res)
+	if err != nil {
+		log.Println("ERROR: Error executing query to check if the user exists")
+		return 0, err
+	}
+	return res, nil
+}
+
+// fucntion to get processed reservation count for activity
+
+func (m *PostgresDBRepo) GetProcessedReservationCountActivity(mid int) (int,error){
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var res int
+	// Query to get the reservations count 
+	query := `
+        SELECT COUNT(ar.id)
+		FROM activity_reservations ar
+		LEFT JOIN activity a ON (ar.activity_id = a.id)
+		WHERE processed =1 AND merchant_id=$1
+    `
+	row := m.DB.QueryRowContext(ctx, query,mid)
+	err := row.Scan(&res)
+	if err != nil {
+		log.Println("ERROR: Error executing query to check if the user exists")
+		return 0, err
+	}
 	return res, nil
 }

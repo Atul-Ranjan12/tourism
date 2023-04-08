@@ -1,6 +1,5 @@
 {{template "merchant" .}}
 
-{{define "css"}}
 <link
   href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css"
   rel="stylesheet"
@@ -13,7 +12,6 @@
 />
 
 <link rel="stylesheet" href="/static/css/tabStyles.css" />
-{{ end }}
 
 {{define "content"}}
 
@@ -79,10 +77,10 @@
     <div class="card mt-3">
       <div class="card-body">
         <div class="title">
-          <div class="float-sm-left text-primary">
+          <div class="float-start text-primary">
             <a href="/merchant/1/merchant-show-reservations/{{.ReservationID}}">{{.FirstName}} {{.LastName}}</a>
           </div>
-          <div class="float-sm-right text-primary">
+          <div class="float-end text-primary">
           {{.From}} to {{.Stop}}
           </div>
         </div>
@@ -128,10 +126,10 @@
     <div class="card mt-3">
       <div class="card-body">
         <div class="title">
-          <div class="float-sm-left text-primary">
+          <div class="float-start text-primary">
             <a href="/merchant/1/merchant-show-reservations/{{.ReservationID}}/activity">{{.FirstName}} {{.LastName}}</a>
           </div>
-          <div class="float-sm-right text-primary">
+          <div class="float-end text-primary">
           {{.Activity.ActivityName}}
           </div>
         </div>

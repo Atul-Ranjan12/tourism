@@ -46,6 +46,7 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/make-activity-reservation", handlers.Repo.ShowMakeActivityReservation)
 	mux.Post("/make-activity-reservation", handlers.Repo.PostShowMakeActivityReservation)
 
+
 	// Utility
 	// 1. Write Reviews for Items:
 	mux.Get("/add-review", handlers.Repo.ShowAddReview)
